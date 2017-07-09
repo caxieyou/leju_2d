@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+    canvas {
+        border: 1px dashed black;
+    }
+</style>
+
+</head>
+<body onload="main()">
+    <canvas id="canvas" width="800" height="600"></canvas>
+</body>
+
+<script src="./fabric/dist/fabric.js"></script>
+<script src="./clipper/clipper_unminified.js"></script>
+
+<script src="src/utility.js"></script>
+<script src="src/main.js"></script>
+
+<button onclick="onRect()">Rect</button>
+<button onclick="onCirle()">Circle</button>
+<button onclick="onLinePath()">LinePath</button>
+
+<button onclick="onStop()">Stop</button>
+<button onclick="onClear()">Clear</button>
+<button onclick="onOutput()">Output</button>
+</html>
