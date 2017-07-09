@@ -113,6 +113,14 @@ function getKeyInfo(obj) {
     return res;
 }
 
+function getLength(paths) {
+    var sum = 0;
+    for(var x in paths) {
+        sum++;
+    }
+    return sum;
+}
+
 function getPath(obj) {
     var res = {};
     if(obj.type === "rect") {

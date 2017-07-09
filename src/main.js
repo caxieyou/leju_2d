@@ -76,13 +76,13 @@ function onOutput() {
                 
                 //反向求一次
                 cpr.Clear();
-                if(resPathArray[key0][0] instanceof Array) {
+                if(resPathArray[key1][0] instanceof Array) {
                     cpr.AddPaths(resPathArray[key1], ClipperLib.PolyType.ptSubject, true);  // true means closed path
                 }else {
                     cpr.AddPath(resPathArray[key1], ClipperLib.PolyType.ptSubject, true);  // true means closed path
                 }
                 
-                if(resPathArray[key1][0] instanceof Array) {
+                if(resPathArray[key0][0] instanceof Array) {
                     cpr.AddPaths(resPathArray[key0], ClipperLib.PolyType.ptClip, true);
                 }else {
                     cpr.AddPath(resPathArray[key0], ClipperLib.PolyType.ptClip, true);
