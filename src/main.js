@@ -120,7 +120,7 @@ function onOutput() {
                         index++;
                     }
                     
-                    for(var i = 0; i < solution_diff.length; i++) {
+                    for(var i = 0; i < solution_diff_reverse.length; i++) {
                         resPathArray["node_" +index] = addPath(solution_diff_reverse[i]);
                         index++;
                     }
