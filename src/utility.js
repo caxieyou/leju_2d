@@ -85,7 +85,6 @@ function updateLinePath(path, options){
     }
 }
 
-
 function getKeyInfo(obj) {
     var res = {};
     if(obj.type === "rect") {
@@ -132,35 +131,7 @@ function getSegements(path) {
     return res;
 }
 
-function _segmentsIntr(a, b, c, d){  
-    //twice of the triangle area  
-    var area_abc = (a.X - c.X) * (b.Y - c.Y) - (a.Y - c.Y) * (b.X - c.X);  
-  
-    //twice of the triangle area  
-    var area_abd = (a.X - d.X) * (b.Y - d.Y) - (a.Y - d.Y) * (b.X - d.X);   
-  
-    //if the sign of areas are same which means they are on the same side  
-    if ( area_abc*area_abd>=0 ) {  
-        return null;  
-    }  
-    var area_cda = (c.X - a.X) * (d.Y - a.Y) - (c.Y - a.Y) * (d.X - a.X);  
-    
-    var area_cdb = area_cda + area_abc - area_abd ;  
-    if (  area_cda * area_cdb >= 0 ) {  
-        return null;  
-    }  
-    
-    //calculate the intersect point
-    var t = area_cda / ( area_abd- area_abc );  
-    var dx= t*(b.X - a.X),  
-        dy= t*(b.Y - a.Y);  
-    return { X: Math.round(a.X + dx) , Y: Math.round(a.Y + dy) };  
-  
-}  
-
 function lineIntersectWithRect(segement, rect) {
-    
-    
     var res = [];
     var intersect = null;
     var rectLine = [];
@@ -303,6 +274,32 @@ function addPathXOR(xor) {
     }
     return res;
 }
+
+function _segmentsIntr(a, b, c, d){  
+    //twice of the triangle area  
+    var area_abc = (a.X - c.X) * (b.Y - c.Y) - (a.Y - c.Y) * (b.X - c.X);  
+  
+    //twice of the triangle area  
+    var area_abd = (a.X - d.X) * (b.Y - d.Y) - (a.Y - d.Y) * (b.X - d.X);   
+  
+    //if the sign of areas are same which means they are on the same side  
+    if ( area_abc*area_abd>=0 ) {  
+        return null;  
+    }  
+    var area_cda = (c.X - a.X) * (d.Y - a.Y) - (c.Y - a.Y) * (d.X - a.X);  
+    
+    var area_cdb = area_cda + area_abc - area_abd ;  
+    if (  area_cda * area_cdb >= 0 ) {  
+        return null;  
+    }  
+    
+    //calculate the intersect point
+    var t = area_cda / ( area_abd- area_abc );  
+    var dx= t*(b.X - a.X),  
+        dy= t*(b.Y - a.Y);  
+    return { X: Math.round(a.X + dx) , Y: Math.round(a.Y + dy) };  
+  
+}  
 
 function _updateDims(path) {
     var dims = path._parseDimensions(),

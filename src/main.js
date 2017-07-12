@@ -44,14 +44,14 @@ function onOutput() {
     }
 
     for(var line in resLineArray) {
-        //获取所有线段
+        //get all the line segments
         var segements = getSegements(resLineArray[line]);
         for (var rect in resPolygonArray) {
-            //每个线段都和长方形进行计算交互
+            //calculate the intersection between line and rect
             for(var i = 0; i < segements.length; i++){
                 var intersect = null; 
                 intersect = lineIntersectWithRect(segements[i], resPolygonArray[rect]);
-                //console.log(intersect);
+                
                 if(intersect) {
                     resPolygonPartsArray["polygon_" + index] = intersect[0];
                     index++;
@@ -81,12 +81,12 @@ function onOutput() {
             for (var key1 in resPolygonPartsArray) {
                 breakOut = false;
                 
-                //一样就skip
+                //skip if same
                 if (key0 === key1) {
                     continue;
                 }
                 
-                //正向求一次
+                //calculate positive
                 cpr.Clear();
                 if(resPolygonPartsArray[key0][0] instanceof Array) {
                     cpr.AddPaths(resPolygonPartsArray[key0], ClipperLib.PolyType.ptSubject, true);  // true means closed path
@@ -103,7 +103,7 @@ function onOutput() {
                 cpr.Execute(ClipperLib.ClipType.ctIntersection, solution_intersect, ClipperLib.PolyFillType.pftNonZero, ClipperLib.PolyFillType.pftNonZero);
                 cpr.Execute(ClipperLib.ClipType.ctDifference,   solution_diff,      ClipperLib.PolyFillType.pftNonZero, ClipperLib.PolyFillType.pftNonZero);
                 
-                //反向求一次
+                //calculate with reverse
                 cpr.Clear();
                 if(resPolygonPartsArray[key1][0] instanceof Array) {
                     cpr.AddPaths(resPolygonPartsArray[key1], ClipperLib.PolyType.ptSubject, true);  // true means closed path
@@ -119,10 +119,11 @@ function onOutput() {
                 cpr.Execute(ClipperLib.ClipType.ctIntersection, solution_intersect_reverse, ClipperLib.PolyFillType.pftNonZero, ClipperLib.PolyFillType.pftNonZero);
                 cpr.Execute(ClipperLib.ClipType.ctDifference,   solution_diff_reverse,      ClipperLib.PolyFillType.pftNonZero, ClipperLib.PolyFillType.pftNonZero);
                 
-                //没有交集，说明两个东西离得很远
+                //no intersection
                 if (solution_intersect.length === 0) {
                     continue;
-                //如果diff为空，说明是包含关系
+                
+                //one includes the other
                 } else if(solution_diff.length === 0 || solution_diff_reverse.length === 0){
                     
                     delete resPolygonPartsArray[key0];
@@ -191,7 +192,6 @@ function onMouseDown(options) {
 };
 
 function onMouseUp(options) {
-    //type = null;
     canvas.renderAll();
 };
 
