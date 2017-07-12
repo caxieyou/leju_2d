@@ -113,17 +113,163 @@ function getKeyInfo(obj) {
     return res;
 }
 
-function getLength(paths) {
+function isNotSingle(paths) {
     var sum = 0;
     for(var x in paths) {
         sum++;
+        if(sum > 1) {
+            return true;
+        }
     }
-    return sum;
+    return false;
+}
+
+function getSegements(path) {
+    var res = [];
+    for(var i = 0; i < path.length - 1; i++) {
+        res.push({point0: path[i], point1: path[i+1]});
+    }
+    return res;
+}
+
+function _segmentsIntr(a, b, c, d){  
+  
+    // 三角形abc 面积的2倍  
+    var area_abc = (a.X - c.X) * (b.Y - c.Y) - (a.Y - c.Y) * (b.X - c.X);  
+  
+    // 三角形abd 面积的2倍  
+    var area_abd = (a.X - d.X) * (b.Y - d.Y) - (a.Y - d.Y) * (b.X - d.X);   
+  
+    // 面积符号相同则两点在线段同侧,不相交 (对点在线段上的情况,本例当作不相交处理);  
+    if ( area_abc*area_abd>=0 ) {  
+        return null;  
+    }  
+  
+    // 三角形cda 面积的2倍  
+    var area_cda = (c.X - a.X) * (d.Y - a.Y) - (c.Y - a.Y) * (d.X - a.X);  
+    // 三角形cdb 面积的2倍  
+    // 注意: 这里有一个小优化.不需要再用公式计算面积,而是通过已知的三个面积加减得出.  
+    var area_cdb = area_cda + area_abc - area_abd ;  
+    if (  area_cda * area_cdb >= 0 ) {  
+        return null;  
+    }  
+  
+    //计算交点坐标  
+    var t = area_cda / ( area_abd- area_abc );  
+    var dx= t*(b.X - a.X),  
+        dy= t*(b.Y - a.Y);  
+    return { X: Math.round(a.X + dx) , Y: Math.round(a.Y + dy) };  
+  
+}  
+
+function lineIntersectWithRect(segement, rect) {
+    
+    
+    var res = [];
+    var intersect = null;
+    var rectLine = [];
+    rectLine[0] = {point0 : rect[0], point1 : rect[1]};
+    rectLine[1] = {point0 : rect[1], point1 : rect[2]};
+    rectLine[2] = {point0 : rect[2], point1 : rect[3]};
+    rectLine[3] = {point0 : rect[3], point1 : rect[0]};
+    
+    var record = [];
+    for(var i = 0; i < 4; i++) {
+        var inter = _segmentsIntr(segement.point0, segement.point1, rectLine[i].point0, rectLine[i].point1);
+        if(inter) {
+            res.push(inter);
+            record.push(i);
+        }
+    }
+    
+    if (record.length < 2) {
+        intersect = null;
+    } else if(record[1] - record[0] === 1){
+        intersect = [];
+        if (record[0] === 0 && record[1] === 1) {
+            intersect[0] = [{X:rect[0].X,  Y:rect[0].Y}, 
+                            {X:res[0].X,  Y:res[0].Y}, 
+                            {X:res[1].X,  Y:res[1].Y}, 
+                            {X:rect[2].X,  Y:rect[2].Y},
+                            {X:rect[3].X,  Y:rect[3].Y}];
+                            
+            intersect[1] = [{X:res[0].X,  Y:res[0].Y}, 
+                            {X:rect[1].X,  Y:rect[1].Y}, 
+                            {X:res[1].X,  Y:res[1].Y}];
+        }
+        
+        if (record[0] === 1 && record[1] === 2) {
+            intersect[0] = [{X:rect[0].X,  Y:rect[0].Y}, 
+                            {X:rect[1].X,  Y:rect[1].Y}, 
+                            {X:res[0].X,  Y:res[0].Y}, 
+                            {X:res[1].X,  Y:res[1].Y},
+                            {X:rect[3].X,  Y:rect[3].Y}];
+                            
+            intersect[1] = [{X:res[0].X,  Y:res[0].Y}, 
+                            {X:rect[2].X,  Y:rect[2].Y}, 
+                            {X:res[1].X,  Y:res[1].Y}];
+        }
+        
+        if (record[0] === 2 && record[1] === 3) {
+            intersect[0] = [{X:rect[0].X,  Y:rect[0].Y}, 
+                            {X:rect[1].X,  Y:rect[1].Y}, 
+                            {X:rect[2].X,  Y:rect[2].Y}, 
+                            {X:res[0].X,  Y:res[0].Y},
+                            {X:res[1].X,  Y:res[1].Y}];
+                            
+            intersect[1] = [{X:res[0].X,  Y:res[0].Y}, 
+                            {X:rect[2].X,  Y:rect[2].Y}, 
+                            {X:res[1].X,  Y:res[1].Y}];
+        }
+        
+        if (record[0] === 0 && record[1] === 3) {
+            intersect[0] = [{X:res[0].X,  Y:res[0].Y}, 
+                            {X:rect[1].X,  Y:rect[1].Y}, 
+                            {X:rect[2].X,  Y:rect[2].Y}, 
+                            {X:rect[3].X,  Y:rect[3].Y},
+                            {X:res[1].X,  Y:rect[1].Y}];
+                            
+            intersect[1] = [{X:rect[0].X,  Y:rect[0].Y}, 
+                            {X:res[0].X,  Y:res[0].Y}, 
+                            {X:res[1].X,  Y:res[1].Y}];
+        }
+    } else if(record[1] - record[0] === 2){
+        intersect = [];
+        if (record[0] === 0 && record[1] === 2) {
+            intersect[0] = [{X:rect[0].X,  Y:rect[0].Y}, 
+                            {X:res[0].X,  Y:res[0].Y}, 
+                            {X:res[1].X,  Y:res[1].Y}, 
+                            {X:rect[3].X,  Y:rect[3].Y}];
+                            
+            intersect[1] = [{X:res[0].X,  Y:res[0].Y}, 
+                            {X:rect[1].X,  Y:rect[1].Y}, 
+                            {X:rect[2].X,  Y:rect[2].Y}, 
+                            {X:res[1].X,  Y:res[1].Y}];
+        }
+        
+        if (record[0] === 1 && record[1] === 3) {
+            intersect[0] = [{X:rect[0].X,  Y:rect[0].Y}, 
+                            {X:rect[1].X,  Y:rect[1].Y}, 
+                            {X:res[0].X,  Y:res[0].Y}, 
+                            {X:res[1].X,  Y:res[1].Y}];
+                            
+            intersect[1] = [{X:res[1].X,  Y:res[1].Y}, 
+                            {X:res[0].X,  Y:res[0].Y}, 
+                            {X:rect[2].X,  Y:rect[2].Y}, 
+                            {X:rect[3].X,  Y:rect[3].Y}];
+        }
+    }
+    
+    
+    return intersect;
+    //console.log(intersect);
+    //console.log(segement);
+    //console.log(rect);
 }
 
 function getPath(obj) {
-    var res = {};
     if(obj.type === "rect") {
+        var res = {};
         res.x = obj.startX;
         res.y = obj.startY;
         res.width = obj.getWidth();
@@ -141,14 +287,11 @@ function getPath(obj) {
         var path = [];
         for (var i = 0; i < obj.path.length; i++) {
             if(obj.path[i][0] === 'M' || obj.path[i][0] === 'L'){
-                res.path.push({X: obj.path[i][1] + obj.startX, Y: obj.path[i][2] + obj.startY});
+                path.push({X: obj.path[i][1] + obj.startX, Y: obj.path[i][2] + obj.startY});
             }
         }
         return path;
-        //res.type = "path";
-        
     }
-    //return res;
 }
 
 function addPath(path) {

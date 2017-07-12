@@ -19,7 +19,6 @@ function onLinePath(){
     canvas.add(createLinePath());
 }
 
-
 function onStop() {
     type = null;
 };
@@ -28,15 +27,50 @@ function onClear() {
     canvas.clear();
 };
 
-
 function onOutput() {
     var objs = canvas.getObjects();
     var index = 0;
-    var resPathArray = [];
+    var resPolygonArray = [];
+    var resPolygonPartsArray = [];
+    var resLineArray = [];
+    
     for(var i = 0; i < objs.length; i++) {
-        resPathArray["node_" +index] = getPath(objs[i]);
+        //console.log(objs[i]);
+        if (objs[i].type === "path") {
+            resLineArray["line_" +index] = getPath(objs[i]);
+        } else{
+            resPolygonArray["polygon_" +index] = getPath(objs[i]);
+        }
         index++;
     }
+
+    for(var line in resLineArray) {
+        //获取所有线段
+        //console.log(resLineArray[line]);
+        var segements = getSegements(resLineArray[line]);
+        for (var rect in resPolygonArray) {
+            //每个线段都和长方形进行计算交互
+            for(var i = 0; i < segements.length; i++){
+                var intersect = null; 
+                intersect = lineIntersectWithRect(segements[i], resPolygonArray[rect]);
+                //console.log(intersect);
+                if(intersect) {
+                    resPolygonPartsArray["polygon_" + index] = intersect[0];
+                    index++;
+                    resPolygonPartsArray["polygon_" + index] = intersect[1];
+                    index++;
+                } else {
+                    if(!resPolygonPartsArray[rect]) {
+                        resPolygonPartsArray[rect] = resPolygonArray[rect];
+                    }
+                }
+            }
+            
+        }
+    }
+    //console.log(resLineArray);
+    //console.log(resPolygonArray);
+    //console.log(resPolygonPartsArray);
     
     var cpr = new ClipperLib.Clipper();
     cpr.StrictlySimple = true;
@@ -47,9 +81,9 @@ function onOutput() {
     
     var breakOut = false;
 
-    while(true && getLength(resPathArray) > 1) {
-        for (var key0 in resPathArray) {
-            for (var key1 in resPathArray) {
+    while(true && isNotSingle(resPolygonPartsArray)) {
+        for (var key0 in resPolygonPartsArray) {
+            for (var key1 in resPolygonPartsArray) {
                 breakOut = false;
                 
                 //一样就skip
@@ -59,16 +93,16 @@ function onOutput() {
                 
                 //正向求一次
                 cpr.Clear();
-                if(resPathArray[key0][0] instanceof Array) {
-                    cpr.AddPaths(resPathArray[key0], ClipperLib.PolyType.ptSubject, true);  // true means closed path
+                if(resPolygonPartsArray[key0][0] instanceof Array) {
+                    cpr.AddPaths(resPolygonPartsArray[key0], ClipperLib.PolyType.ptSubject, true);  // true means closed path
                 }else {
-                    cpr.AddPath(resPathArray[key0], ClipperLib.PolyType.ptSubject, true);  // true means closed path
+                    cpr.AddPath(resPolygonPartsArray[key0], ClipperLib.PolyType.ptSubject, true);  // true means closed path
                 }
                 
-                if(resPathArray[key1][0] instanceof Array) {
-                    cpr.AddPaths(resPathArray[key1], ClipperLib.PolyType.ptClip, true);
+                if(resPolygonPartsArray[key1][0] instanceof Array) {
+                    cpr.AddPaths(resPolygonPartsArray[key1], ClipperLib.PolyType.ptClip, true);
                 }else {
-                    cpr.AddPath(resPathArray[key1], ClipperLib.PolyType.ptClip, true);
+                    cpr.AddPath(resPolygonPartsArray[key1], ClipperLib.PolyType.ptClip, true);
                 }
                 
                 cpr.Execute(ClipperLib.ClipType.ctIntersection, solution_intersect, ClipperLib.PolyFillType.pftNonZero, ClipperLib.PolyFillType.pftNonZero);
@@ -76,16 +110,16 @@ function onOutput() {
                 
                 //反向求一次
                 cpr.Clear();
-                if(resPathArray[key1][0] instanceof Array) {
-                    cpr.AddPaths(resPathArray[key1], ClipperLib.PolyType.ptSubject, true);  // true means closed path
+                if(resPolygonPartsArray[key1][0] instanceof Array) {
+                    cpr.AddPaths(resPolygonPartsArray[key1], ClipperLib.PolyType.ptSubject, true);  // true means closed path
                 }else {
-                    cpr.AddPath(resPathArray[key1], ClipperLib.PolyType.ptSubject, true);  // true means closed path
+                    cpr.AddPath(resPolygonPartsArray[key1], ClipperLib.PolyType.ptSubject, true);  // true means closed path
                 }
                 
-                if(resPathArray[key0][0] instanceof Array) {
-                    cpr.AddPaths(resPathArray[key0], ClipperLib.PolyType.ptClip, true);
+                if(resPolygonPartsArray[key0][0] instanceof Array) {
+                    cpr.AddPaths(resPolygonPartsArray[key0], ClipperLib.PolyType.ptClip, true);
                 }else {
-                    cpr.AddPath(resPathArray[key0], ClipperLib.PolyType.ptClip, true);
+                    cpr.AddPath(resPolygonPartsArray[key0], ClipperLib.PolyType.ptClip, true);
                 }
                 cpr.Execute(ClipperLib.ClipType.ctIntersection, solution_intersect_reverse, ClipperLib.PolyFillType.pftNonZero, ClipperLib.PolyFillType.pftNonZero);
                 cpr.Execute(ClipperLib.ClipType.ctDifference,   solution_diff_reverse,      ClipperLib.PolyFillType.pftNonZero, ClipperLib.PolyFillType.pftNonZero);
@@ -98,30 +132,30 @@ function onOutput() {
                 //如果diff为空，说明是包含关系
                 } else if(solution_diff.length === 0 || solution_diff_reverse.length === 0){
                     
-                    delete resPathArray[key0];
-                    delete resPathArray[key1];
+                    delete resPolygonPartsArray[key0];
+                    delete resPolygonPartsArray[key1];
                     
-                    resPathArray["node_" +index] = solution_diff.length === 0 ? addPathXOR(solution_diff_reverse) : addPathXOR(solution_diff);
+                    resPolygonPartsArray["polygon_" +index] = solution_diff.length === 0 ? addPathXOR(solution_diff_reverse) : addPathXOR(solution_diff);
                     index++;
                     
                     breakOut = true;
                     break;
                 } else {
-                    delete resPathArray[key0];
-                    delete resPathArray[key1];
+                    delete resPolygonPartsArray[key0];
+                    delete resPolygonPartsArray[key1];
                     
                     for(var i = 0; i < solution_intersect.length; i++) {
-                        resPathArray["node_" +index] = addPath(solution_intersect[i]);
+                        resPolygonPartsArray["polygon_" +index] = addPath(solution_intersect[i]);
                         index++;
                     }
                     
                     for(var i = 0; i < solution_diff.length; i++) {
-                        resPathArray["node_" +index] = addPath(solution_diff[i]);
+                        resPolygonPartsArray["polygon_" +index] = addPath(solution_diff[i]);
                         index++;
                     }
                     
                     for(var i = 0; i < solution_diff_reverse.length; i++) {
-                        resPathArray["node_" +index] = addPath(solution_diff_reverse[i]);
+                        resPolygonPartsArray["polygon_" +index] = addPath(solution_diff_reverse[i]);
                         index++;
                     }
                     breakOut = true;
@@ -136,9 +170,10 @@ function onOutput() {
             break;
         }
     }
+
+    console.log(resPolygonPartsArray);
+    console.log(resLineArray);
     
-    
-    console.log(resPathArray);
 };
 
 function onMouseDown(options) {
