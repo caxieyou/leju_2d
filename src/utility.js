@@ -133,28 +133,24 @@ function getSegements(path) {
 }
 
 function _segmentsIntr(a, b, c, d){  
-  
-    // 三角形abc 面积的2倍  
+    //twice of the triangle area  
     var area_abc = (a.X - c.X) * (b.Y - c.Y) - (a.Y - c.Y) * (b.X - c.X);  
   
-    // 三角形abd 面积的2倍  
+    //twice of the triangle area  
     var area_abd = (a.X - d.X) * (b.Y - d.Y) - (a.Y - d.Y) * (b.X - d.X);   
   
-    // 面积符号相同则两点在线段同侧,不相交 (对点在线段上的情况,本例当作不相交处理);  
+    //if the sign of areas are same which means they are on the same side  
     if ( area_abc*area_abd>=0 ) {  
         return null;  
     }  
-  
-    // 三角形cda 面积的2倍  
     var area_cda = (c.X - a.X) * (d.Y - a.Y) - (c.Y - a.Y) * (d.X - a.X);  
-    // 三角形cdb 面积的2倍  
-    // 注意: 这里有一个小优化.不需要再用公式计算面积,而是通过已知的三个面积加减得出.  
+    
     var area_cdb = area_cda + area_abc - area_abd ;  
     if (  area_cda * area_cdb >= 0 ) {  
         return null;  
     }  
-  
-    //计算交点坐标  
+    
+    //calculate the intersect point
     var t = area_cda / ( area_abd- area_abc );  
     var dx= t*(b.X - a.X),  
         dy= t*(b.Y - a.Y);  
@@ -259,12 +255,7 @@ function lineIntersectWithRect(segement, rect) {
                             {X:rect[3].X,  Y:rect[3].Y}];
         }
     }
-    
-    
     return intersect;
-    //console.log(intersect);
-    //console.log(segement);
-    //console.log(rect);
 }
 
 function getPath(obj) {
@@ -274,10 +265,9 @@ function getPath(obj) {
         res.y = obj.startY;
         res.width = obj.getWidth();
         res.height = obj.getHeight();
-        //res.type = "rect";
         return [{X: res.x, Y: res.y}, {X: res.x + res.width, Y: res.y}, {X: res.x + res.width, Y: res.y + res.height}, {X: res.x, Y: res.y + res.height}];
     } else if(obj.type === "circle") {
-        //circle还没想好
+        //circle is not ready
         //res.x = obj.centerX;
         //res.y = obj.centerY;
         //res.radius = obj.radius;

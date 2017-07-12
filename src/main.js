@@ -35,7 +35,6 @@ function onOutput() {
     var resLineArray = [];
     
     for(var i = 0; i < objs.length; i++) {
-        //console.log(objs[i]);
         if (objs[i].type === "path") {
             resLineArray["line_" +index] = getPath(objs[i]);
         } else{
@@ -46,7 +45,6 @@ function onOutput() {
 
     for(var line in resLineArray) {
         //获取所有线段
-        //console.log(resLineArray[line]);
         var segements = getSegements(resLineArray[line]);
         for (var rect in resPolygonArray) {
             //每个线段都和长方形进行计算交互
@@ -68,10 +66,7 @@ function onOutput() {
             
         }
     }
-    //console.log(resLineArray);
-    //console.log(resPolygonArray);
-    //console.log(resPolygonPartsArray);
-    
+
     var cpr = new ClipperLib.Clipper();
     cpr.StrictlySimple = true;
     var solution_intersect = new ClipperLib.Paths();
@@ -123,8 +118,6 @@ function onOutput() {
                 }
                 cpr.Execute(ClipperLib.ClipType.ctIntersection, solution_intersect_reverse, ClipperLib.PolyFillType.pftNonZero, ClipperLib.PolyFillType.pftNonZero);
                 cpr.Execute(ClipperLib.ClipType.ctDifference,   solution_diff_reverse,      ClipperLib.PolyFillType.pftNonZero, ClipperLib.PolyFillType.pftNonZero);
-                
-                
                 
                 //没有交集，说明两个东西离得很远
                 if (solution_intersect.length === 0) {
