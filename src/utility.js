@@ -121,6 +121,17 @@ function _isNotSingle(paths) {
     return false;
 }
 
+function _isEmpty(paths) {
+    var num = 0;
+    for(var path in paths) {
+        num++;
+        if(num > 0) {
+            return true;
+        }
+    }
+    return false;
+}
+
 function _getPath(obj) {
     if(obj.type === "rect") {
         return [{X: obj.start.X,                    Y: obj.start.Y                  }, 
@@ -291,13 +302,15 @@ function process(objs) {
     for(var i = 0; i < objs.length; i++) {
         if (objs[i].type === "path") {
             resLineArray["line_" +index] = _getPath(objs[i]);
-        } else{
+            index++;
+        } 
+        else if (objs[i].type === "rect"){
             resPolygonArray["polygon_" +index] = _getPath(objs[i]);
+            index++;
         }
-        index++;
     }
 
-    if (_isNotSingle(resLineArray)) {
+    if (_isEmpty(resLineArray)) {
         for(var line in resLineArray) {
             //get all the line segments
             var segements = _getSegements(resLineArray[line], TYPE.LINEPATH);
