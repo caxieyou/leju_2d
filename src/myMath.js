@@ -1,4 +1,10 @@
 
+var POINT_ID        = 0;
+var SEGMENT_ID      = 0;
+var POLYGON_ID      = 0;
+var POLYGTREE_ID    = 0;
+
+
 function MyPoint(x, y){
     if (!y) {
         this.X = x.X;
@@ -7,12 +13,44 @@ function MyPoint(x, y){
         this.X = x;
         this.Y = y;
     }
+    this.id = this._generateID();
 };
+
+MyPoint.prototype._generateID = function () {
+    return "point_" + POINT_ID++;
+}
+
 
 function MySegment(point0, point1){
     this.point0 = point0;
     this.point1 = point1;
+    this.next = null;
+    this.pre = null;
+    this.id = this._generateID();
 };
+
+MySegment.prototype._generateID = function () {
+    return "segment_" + SEGMENT_ID++;
+}
+
+function MyPolygon(){
+    this.root = null; //some edge
+    this.end = null;
+    this.id = this._generateID();
+};
+
+MyPolygon.prototype._generateID = function () {
+    return "polygon_" + POLYGON_ID++;
+}
+
+
+function MyPolytree(){
+    this.poly = null;
+    this.id = this._generateID();
+};
+MyPolytree.prototype._generateID = function () {
+    return "polytree_" + POLYGTREE_ID++;
+}
 
 var MyMath = {};
 

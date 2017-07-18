@@ -3,6 +3,13 @@ TYPE.CIRCLE     = 0;
 TYPE.RECT       = 1;
 TYPE.LINEPATH   = 2;
 
+var PlyList = [];
+//var ID = 0;
+
+function generateID() {
+    return ID++;
+}
+
 function createCircle(options) {
     var circle = new fabric.Circle({
                             radius      : 0, 
@@ -121,7 +128,7 @@ function _isNotSingle(paths) {
     return false;
 }
 
-function _isEmpty(paths) {
+function _isNotEmpty(paths) {
     var num = 0;
     for(var path in paths) {
         num++;
@@ -134,10 +141,45 @@ function _isEmpty(paths) {
 
 function _getPath(obj) {
     if(obj.type === "rect") {
+        
+        var poly = new MyPolygon();
+        
+        var point_0 = new MyPoint(obj.start.X,                  obj.start.Y                  );
+        var point_1 = new MyPoint(obj.start.X + obj.getWidth(), obj.start.Y                  );
+        var point_2 = new MyPoint(obj.start.X + obj.getWidth(), obj.start.Y + obj.getHeight());
+        var point_3 = new MyPoint(obj.start.X,                  obj.start.Y + obj.getHeight());
+        
+        
+        var seg_0 = new MySegment(point_0, point_1);
+        var seg_1 = new MySegment(point_1, point_2);
+        var seg_2 = new MySegment(point_2, point_3);
+        var seg_3 = new MySegment(point_3, point_0);
+        
+        //console.log(seg_0);
+        seg_0.next = seg_1;
+        seg_1.next = seg_2;
+        seg_2.next = seg_3;
+        
+        seg_3.pre = seg_2;
+        seg_2.pre = seg_1;
+        seg_1.pre = seg_0;
+        
+        
+        var rectPoly = new MyPolygon();
+        
+        rectPoly.root = seg_0;
+        rectPoly.end = seg_3;
+        
+        //console.log(rectPoly);
+        
+        PlyList.push(rectPoly);
+        
+        
         return [{X: obj.start.X,                    Y: obj.start.Y                  }, 
                 {X: obj.start.X + obj.getWidth(),   Y: obj.start.Y                  }, 
                 {X: obj.start.X + obj.getWidth(),   Y: obj.start.Y + obj.getHeight()}, 
                 {X: obj.start.X,                    Y: obj.start.Y + obj.getHeight()}];
+                
     } else if(obj.type === "circle") {
         //circle is not ready
     } else if(obj.type === "path") {
@@ -160,15 +202,22 @@ function _copyPath(path) {
         for(var i = 0; i < path.length; i++) {
             var tmp = [];
             for(var j = 0; j < path[i].length; j++) {
+                //var idx = isReverse ? path[i].length - j - 1: j;
                 var point = new MyPoint(path[i][j]);
                 tmp.push(point);
             }
             res[i] = tmp;
         }
+        
+        if (res.length === 1) {
+            res = res[0];
+        }
+        
     } else {
         for(var i = 0; i < path.length; i++) {
+            //var idx = isReverse ? path.length - i - 1: i;
             var point = new MyPoint(path[i]);
-            res.push({X: path[i].X, Y: path[i].Y});
+            res.push(point);
         }
     }
     return res;
@@ -249,7 +298,7 @@ function _intersectSegmentRect(segement, rect) {
                             {X:res[1].X,  Y:res[1].Y}];
                             
             intersect[1] = [{X:res[0].X,  Y:res[0].Y}, 
-                            {X:rect[2].X,  Y:rect[2].Y}, 
+                            {X:rect[3].X,  Y:rect[3].Y}, 
                             {X:res[1].X,  Y:res[1].Y}];
         }
         
@@ -310,7 +359,7 @@ function process(objs) {
         }
     }
 
-    if (_isEmpty(resLineArray)) {
+    if (_isNotEmpty(resLineArray)) {
         for(var line in resLineArray) {
             //get all the line segments
             var segements = _getSegements(resLineArray[line], TYPE.LINEPATH);
@@ -337,7 +386,6 @@ function process(objs) {
     } else {
         resPolygonPartsArray = resPolygonArray;
     }
-    
     
     var cpr = new ClipperLib.Clipper();
     cpr.StrictlySimple = true;
@@ -401,8 +449,14 @@ function process(objs) {
                     delete resPolygonPartsArray[key0];
                     delete resPolygonPartsArray[key1];
                     
+                    
                     resPolygonPartsArray["polygon_" +index] = solution_diff.length === 0 ? _copyPath(solution_diff_reverse) : _copyPath(solution_diff);
                     index++;
+                    
+                    for (var j = 0; j < solution_intersect.length; j++) {
+                        resPolygonPartsArray["polygon_" +index] = _copyPath(solution_intersect[j]);
+                        index++;
+                    }
                     
                     breakOut = true;
                     break;
@@ -438,5 +492,14 @@ function process(objs) {
     }
 
     console.log(resPolygonPartsArray);
-    console.log(resLineArray);
+    console.log(PlyList);
+    
+    mapping(PlyList, resPolygonPartsArray);
+    
+    
+    //console.log(resLineArray);
+}
+
+function mapping(myList, pathList) {
+    
 }

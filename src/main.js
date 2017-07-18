@@ -23,7 +23,7 @@ function onStop() {
 function onClear() {
     canvas.clear();
     fabric.Image.fromURL('ruler.jpg', function(oImg) {
-        oImg.set({ selectable: false, opacity: 0.2});
+        oImg.set({ selectable: false, opacity: 0.35});
         canvas.add(oImg);
     });
     canvas.renderAll();
@@ -87,7 +87,7 @@ function main() {
     var line = new fabric.Path('M 0 0');
     canvas = new fabric.Canvas('canvas');
     fabric.Image.fromURL('ruler.jpg', function(oImg) {
-        oImg.set({ selectable: false, opacity: 0.2});
+        oImg.set({ selectable: false, opacity: 0.35});
         canvas.add(oImg);
     });
     canvas.renderAll();
