@@ -212,7 +212,7 @@ function _copyPath(path) {
         if (res.length === 1) {
             res = res[0];
         }
-        
+
     } else {
         for(var i = 0; i < path.length; i++) {
             //var idx = isReverse ? path.length - i - 1: i;
@@ -220,7 +220,7 @@ function _copyPath(path) {
             res.push(point);
         }
     }
-    return res;
+    return res
 }
 
 //get All the segments
@@ -347,7 +347,11 @@ function process(objs) {
     var resPolygonArray = [];
     var resPolygonPartsArray = [];
     var resLineArray = [];
-    
+    PlyList = [];
+    POINT_ID        = 0;
+    SEGMENT_ID      = 0;
+    POLYGON_ID      = 0;
+    POLYGTREE_ID    = 0;
     for(var i = 0; i < objs.length; i++) {
         if (objs[i].type === "path") {
             resLineArray["line_" +index] = _getPath(objs[i]);
@@ -422,7 +426,7 @@ function process(objs) {
                 
                 cpr.Execute(ClipperLib.ClipType.ctIntersection, solution_intersect, ClipperLib.PolyFillType.pftNonZero, ClipperLib.PolyFillType.pftNonZero);
                 cpr.Execute(ClipperLib.ClipType.ctDifference,   solution_diff,      ClipperLib.PolyFillType.pftNonZero, ClipperLib.PolyFillType.pftNonZero);
-                
+                //debugger;
                 //calculate with reverse
                 cpr.Clear();
                 if(resPolygonPartsArray[key1][0] instanceof Array) {
@@ -443,12 +447,15 @@ function process(objs) {
                 if (solution_intersect.length === 0) {
                     continue;
                 
+                //same bug reverse
+                } else if (solution_diff.length === 0 && solution_diff_reverse.length === 0) {
+                    continue;
+                } 
                 //one includes the other
-                } else if(solution_diff.length === 0 || solution_diff_reverse.length === 0){
+                else if(solution_diff.length === 0 || solution_diff_reverse.length === 0){
                     
                     delete resPolygonPartsArray[key0];
                     delete resPolygonPartsArray[key1];
-                    
                     
                     resPolygonPartsArray["polygon_" +index] = solution_diff.length === 0 ? _copyPath(solution_diff_reverse) : _copyPath(solution_diff);
                     index++;
@@ -461,23 +468,19 @@ function process(objs) {
                     breakOut = true;
                     break;
                 } else {
+                    //debugger;
                     delete resPolygonPartsArray[key0];
                     delete resPolygonPartsArray[key1];
                     
-                    for(var i = 0; i < solution_intersect.length; i++) {
-                        resPolygonPartsArray["polygon_" +index] = _copyPath(solution_intersect[i]);
-                        index++;
-                    }
+                    resPolygonPartsArray["polygon_" +index] = _copyPath(solution_intersect);
+                    index++;
                     
-                    for(var i = 0; i < solution_diff.length; i++) {
-                        resPolygonPartsArray["polygon_" +index] = _copyPath(solution_diff[i]);
-                        index++;
-                    }
+                    resPolygonPartsArray["polygon_" +index] = _copyPath(solution_diff);
+                    index++;
                     
-                    for(var i = 0; i < solution_diff_reverse.length; i++) {
-                        resPolygonPartsArray["polygon_" +index] = _copyPath(solution_diff_reverse[i]);
-                        index++;
-                    }
+                    resPolygonPartsArray["polygon_" +index] = _copyPath(solution_diff_reverse);
+                    index++;
+                    
                     breakOut = true;
                     break;
                 }
