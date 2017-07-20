@@ -17,7 +17,7 @@ function MyPoint(x, y){
 };
 
 MyPoint.prototype._generateID = function () {
-    return "point_" + POINT_ID++;
+    return "my_point_" + POINT_ID++;
 }
 
 
@@ -30,7 +30,7 @@ function MySegment(point0, point1){
 };
 
 MySegment.prototype._generateID = function () {
-    return "segment_" + SEGMENT_ID++;
+    return "my_segment_" + SEGMENT_ID++;
 }
 
 function MyPolygon(){
@@ -40,7 +40,7 @@ function MyPolygon(){
 };
 
 MyPolygon.prototype._generateID = function () {
-    return "polygon_" + POLYGON_ID++;
+    return "my_polygon_" + POLYGON_ID++;
 }
 
 
@@ -56,6 +56,14 @@ var MyMath = {};
 
 MyMath.getLength = function(ptA, ptB) {
     return Math.sqrt((ptA.X - ptB.X) * (ptA.X - ptB.X) + (ptA.Y - ptB.Y) * (ptA.Y - ptB.Y));
+};
+
+MyMath.equalPoints = function(point0, point1){
+    if(point0.x === point1.x && point0.y === point1.y) {
+        return true;
+    } else {
+        return false;
+    }
 };
 
 MyMath.lineSegmentsIntersect = function(seg0, seg1){  

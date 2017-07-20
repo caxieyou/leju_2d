@@ -174,11 +174,13 @@ function _getPath(obj) {
         
         PlyList.push(rectPoly);
         
-        
-        return [{X: obj.start.X,                    Y: obj.start.Y                  }, 
-                {X: obj.start.X + obj.getWidth(),   Y: obj.start.Y                  }, 
-                {X: obj.start.X + obj.getWidth(),   Y: obj.start.Y + obj.getHeight()}, 
-                {X: obj.start.X,                    Y: obj.start.Y + obj.getHeight()}];
+        var res = {};
+        res.path = [{X: obj.start.X,                    Y: obj.start.Y                  }, 
+                    {X: obj.start.X + obj.getWidth(),   Y: obj.start.Y                  }, 
+                    {X: obj.start.X + obj.getWidth(),   Y: obj.start.Y + obj.getHeight()}, 
+                    {X: obj.start.X,                    Y: obj.start.Y + obj.getHeight()}];     
+        res.source = rectPoly.id;
+        return res;
                 
     } else if(obj.type === "circle") {
         //circle is not ready
@@ -192,7 +194,10 @@ function _getPath(obj) {
                          );
             }
         }
-        return path;
+        var res = {};
+        res.path = path;
+        res.id = '';
+        return res;
     }
 }
 
@@ -364,6 +369,7 @@ function process(objs) {
     }
 
     if (_isNotEmpty(resLineArray)) {
+        /*
         for(var line in resLineArray) {
             //get all the line segments
             var segements = _getSegements(resLineArray[line], TYPE.LINEPATH);
@@ -371,7 +377,7 @@ function process(objs) {
                 //calculate the intersection between line and rect
                 for(var i = 0; i < segements.length; i++){
                     var intersect = null; 
-                    intersect = _intersectSegmentRect(segements[i], resPolygonArray[rect]);
+                    intersect = _intersectSegmentRect(segements[i], resPolygonArray[rect].path);
                     
                     if(intersect) {
                         resPolygonPartsArray["polygon_" + index] = intersect[0];
@@ -387,6 +393,7 @@ function process(objs) {
                 
             }
         }
+        */
     } else {
         resPolygonPartsArray = resPolygonArray;
     }
@@ -412,16 +419,16 @@ function process(objs) {
                 
                 //calculate positive
                 cpr.Clear();
-                if(resPolygonPartsArray[key0][0] instanceof Array) {
-                    cpr.AddPaths(resPolygonPartsArray[key0], ClipperLib.PolyType.ptSubject, true);  // true means closed path
+                if(resPolygonPartsArray[key0].path[0] instanceof Array) {
+                    cpr.AddPaths(resPolygonPartsArray[key0].path, ClipperLib.PolyType.ptSubject, true);  // true means closed path
                 }else {
-                    cpr.AddPath(resPolygonPartsArray[key0], ClipperLib.PolyType.ptSubject, true);  // true means closed path
+                    cpr.AddPath(resPolygonPartsArray[key0].path, ClipperLib.PolyType.ptSubject, true);  // true means closed path
                 }
                 
                 if(resPolygonPartsArray[key1][0] instanceof Array) {
-                    cpr.AddPaths(resPolygonPartsArray[key1], ClipperLib.PolyType.ptClip, true);
+                    cpr.AddPaths(resPolygonPartsArray[key1].path, ClipperLib.PolyType.ptClip, true);
                 }else {
-                    cpr.AddPath(resPolygonPartsArray[key1], ClipperLib.PolyType.ptClip, true);
+                    cpr.AddPath(resPolygonPartsArray[key1].path, ClipperLib.PolyType.ptClip, true);
                 }
                 
                 cpr.Execute(ClipperLib.ClipType.ctIntersection, solution_intersect, ClipperLib.PolyFillType.pftNonZero, ClipperLib.PolyFillType.pftNonZero);
@@ -429,16 +436,16 @@ function process(objs) {
                 //debugger;
                 //calculate with reverse
                 cpr.Clear();
-                if(resPolygonPartsArray[key1][0] instanceof Array) {
-                    cpr.AddPaths(resPolygonPartsArray[key1], ClipperLib.PolyType.ptSubject, true);  // true means closed path
+                if(resPolygonPartsArray[key1].path[0] instanceof Array) {
+                    cpr.AddPaths(resPolygonPartsArray[key1].path, ClipperLib.PolyType.ptSubject, true);  // true means closed path
                 }else {
-                    cpr.AddPath(resPolygonPartsArray[key1], ClipperLib.PolyType.ptSubject, true);  // true means closed path
+                    cpr.AddPath(resPolygonPartsArray[key1].path, ClipperLib.PolyType.ptSubject, true);  // true means closed path
                 }
                 
-                if(resPolygonPartsArray[key0][0] instanceof Array) {
-                    cpr.AddPaths(resPolygonPartsArray[key0], ClipperLib.PolyType.ptClip, true);
+                if(resPolygonPartsArray[key0].path[0] instanceof Array) {
+                    cpr.AddPaths(resPolygonPartsArray[key0].path, ClipperLib.PolyType.ptClip, true);
                 }else {
-                    cpr.AddPath(resPolygonPartsArray[key0], ClipperLib.PolyType.ptClip, true);
+                    cpr.AddPath(resPolygonPartsArray[key0].path, ClipperLib.PolyType.ptClip, true);
                 }
                 cpr.Execute(ClipperLib.ClipType.ctIntersection, solution_intersect_reverse, ClipperLib.PolyFillType.pftNonZero, ClipperLib.PolyFillType.pftNonZero);
                 cpr.Execute(ClipperLib.ClipType.ctDifference,   solution_diff_reverse,      ClipperLib.PolyFillType.pftNonZero, ClipperLib.PolyFillType.pftNonZero);
@@ -447,38 +454,53 @@ function process(objs) {
                 if (solution_intersect.length === 0) {
                     continue;
                 
-                //same bug reverse
+                //same but reverse
                 } else if (solution_diff.length === 0 && solution_diff_reverse.length === 0) {
                     continue;
                 } 
                 //one includes the other
                 else if(solution_diff.length === 0 || solution_diff_reverse.length === 0){
                     
+                    var source0 = resPolygonPartsArray[key0].source;
+                    var source1 = resPolygonPartsArray[key1].source;
                     delete resPolygonPartsArray[key0];
                     delete resPolygonPartsArray[key1];
                     
-                    resPolygonPartsArray["polygon_" +index] = solution_diff.length === 0 ? _copyPath(solution_diff_reverse) : _copyPath(solution_diff);
+                    resPolygonPartsArray["polygon_" +index] = {};
+                    resPolygonPartsArray["polygon_" +index].path = solution_diff.length === 0 ? _copyPath(solution_diff_reverse) : _copyPath(solution_diff);
+                    resPolygonPartsArray["polygon_" +index].souce = solution_diff.length === 0 ? source1 : source0;
                     index++;
                     
-                    for (var j = 0; j < solution_intersect.length; j++) {
-                        resPolygonPartsArray["polygon_" +index] = _copyPath(solution_intersect[j]);
-                        index++;
-                    }
+                    resPolygonPartsArray["polygon_" +index] = {};
+                    resPolygonPartsArray["polygon_" +index].path = _copyPath(solution_intersect);
+                    resPolygonPartsArray["polygon_" +index].souce = solution_diff.length === 0 ? source0 : source1;
+                    index++;
+                    //for (var j = 0; j < solution_intersect.length; j++) {
+                        
+                    //}
                     
                     breakOut = true;
                     break;
                 } else {
                     //debugger;
+                    var source0 = resPolygonPartsArray[key0].source;
+                    var source1 = resPolygonPartsArray[key1].source;
                     delete resPolygonPartsArray[key0];
                     delete resPolygonPartsArray[key1];
                     
-                    resPolygonPartsArray["polygon_" +index] = _copyPath(solution_intersect);
+                    resPolygonPartsArray["polygon_" +index] = {};
+                    resPolygonPartsArray["polygon_" +index].path = _copyPath(solution_intersect);
+                    resPolygonPartsArray["polygon_" +index].souce = 'intersect';
                     index++;
                     
-                    resPolygonPartsArray["polygon_" +index] = _copyPath(solution_diff);
+                    resPolygonPartsArray["polygon_" +index] = {};
+                    resPolygonPartsArray["polygon_" +index].path = _copyPath(solution_diff);
+                    resPolygonPartsArray["polygon_" +index].souce = source0;
                     index++;
                     
-                    resPolygonPartsArray["polygon_" +index] = _copyPath(solution_diff_reverse);
+                    resPolygonPartsArray["polygon_" +index] = {};
+                    resPolygonPartsArray["polygon_" +index].path = _copyPath(solution_diff_reverse);
+                    resPolygonPartsArray["polygon_" +index].souce = source1;
                     index++;
                     
                     breakOut = true;
@@ -504,5 +526,84 @@ function process(objs) {
 }
 
 function mapping(myList, pathList) {
+    //var record = [];
+    for (var path in pathList) {
+        var _path = pathList[path].path;
+        if (_path[0] instanceof Array) {
+            for (var j = 0; j < _path.length; j++) {
+                for (var k = 0; k < _path[j].length; k++) {
+                    var _point = _path[j][k];
+                    
+                    for (var m = 0; m < myList.length; m++) {
+                        var edge = myList[m].root;
+                        var id = myList[m].id;
+                        while (edge) {
+                            var point0 = edge.point0;
+                            var point1 = edge.point1;
+                            
+                            if(MyMath.equalPoints(_point, point0) || MyMath.equalPoints(_point, point1)) {
+                                /*
+                                if(!record[path]) {
+                                    record[path] = [];
+                                    record[path].push(id);
+                                } else {
+                                    var unique = true;
+                                    for(var n = 0; n < record[path].length; n++) {
+                                        if(record[path][n] === id) {
+                                            unique = false;
+                                        }
+                                    }
+                                    
+                                    if(unique) {
+                                        record[path].push(id);
+                                    }
+                                }
+                                */
+                            }
+                            
+                            
+                            edge = edge.next;
+                        }
+                    }
+                }
+            }
+        } else {
+            for (var j = 0; j < _path.length; j++) {
+                var _point = _path[j];
+                
+                for (var m = 0; m < myList.length; m++) {
+                    var edge = myList[m].root;
+                    var id = myList[m].id;
+                    while (edge) {
+                        var point0 = edge.point0;
+                        var point1 = edge.point1;
+                        if(MyMath.equalPoints(_point, point0) || MyMath.equalPoints(_point, point1)) {
+                            /*
+                            if(!record[path]) {
+                                record[path] = [];
+                                record[path].push(id);
+                            } else {
+                                var unique = true;
+                                for(var n = 0; n < record[path].length; n++) {
+                                    if(record[path][n] === id) {
+                                        unique = false;
+                                    }
+                                }
+                                
+                                if(unique) {
+                                    record[path].push(id);
+                                }
+                            }
+                            */
+                        }
+                        edge = edge.next;
+                    }
+                }                                                       
+                
+                
+            }
+        }
+    }
     
+    //console.log(record);
 }
