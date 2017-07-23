@@ -29,8 +29,16 @@ function MySegment(point0, point1){
     this.id = this._generateID();
 };
 
+
 MySegment.prototype._generateID = function () {
     return "my_segment_" + SEGMENT_ID++;
+};
+
+MySegment.prototype.createByPath = function (path) {
+    var point0 = new MyPoint(path[0]);
+    var point1 = new MyPoint(path[1]);
+    this.point0 = point0;
+    this.point1 = point1;
 }
 
 function MyPolygon(){
@@ -43,14 +51,56 @@ MyPolygon.prototype._generateID = function () {
     return "my_polygon_" + POLYGON_ID++;
 }
 
+MyPolygon.prototype.createByPath = function (path) {
+    var point_s = new MyPoint(path[0]);
+    var point_c = point_s;
+    var point_e;
+    var segs = [];
+    for (var i = 1; i < path.length; i++) {
+        point_e = new MyPoint(path[i]);
+        var seg = new MySegment(point_c, point_e);
+        segs.push(seg);
+        point_c = point_e;
+    }
+    
+    var seg = new MySegment(point_c, point_s);
+    segs.push(seg);
+    this.root = segs[0];
+    this.end = segs[segs.length - 1];
+    
+    for (var i = 0; i < segs.length - 1; i++) {
+        segs[i].next = segs[i+1];
+    }
+    
+    for (var i = 1; i < segs.length; i++) {
+        segs[i].pre = segs[i-1];
+    }
+}
+
 
 function MyPolytree(){
-    this.poly = null;
+    this.polygons = [];
     this.id = this._generateID();
 };
+
 MyPolytree.prototype._generateID = function () {
     return "polytree_" + POLYGTREE_ID++;
+};
+
+MyPolytree.prototype.createByPaths = function (paths) {
+    
+    for(var i = 0; i < paths.length; i++) {
+        var poly = new MyPolygon();
+        this.polygons.push(poly.createByPath(paths[i]));
+    }
+    
 }
+
+
+
+
+
+
 
 var MyMath = {};
 

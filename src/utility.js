@@ -3,7 +3,7 @@ TYPE.CIRCLE     = 0;
 TYPE.RECT       = 1;
 TYPE.LINEPATH   = 2;
 
-var PlyList = [];
+var PlyList = {};
 //var ID = 0;
 
 function generateID() {
@@ -142,7 +142,7 @@ function _isNotEmpty(paths) {
 function _getPath(obj) {
     if(obj.type === "rect") {
         
-        var poly = new MyPolygon();
+        //var poly = new MyPolygon();
         
         var point_0 = new MyPoint(obj.start.X,                  obj.start.Y                  );
         var point_1 = new MyPoint(obj.start.X + obj.getWidth(), obj.start.Y                  );
@@ -172,14 +172,16 @@ function _getPath(obj) {
         
         //console.log(rectPoly);
         
-        PlyList.push(rectPoly);
+        PlyList[rectPoly.id] = rectPoly;
         
         var res = {};
         res.path = [{X: obj.start.X,                    Y: obj.start.Y                  }, 
                     {X: obj.start.X + obj.getWidth(),   Y: obj.start.Y                  }, 
                     {X: obj.start.X + obj.getWidth(),   Y: obj.start.Y + obj.getHeight()}, 
                     {X: obj.start.X,                    Y: obj.start.Y + obj.getHeight()}];     
-        res.source = rectPoly.id;
+        res.source = {};
+        res.source[rectPoly.id] = 1;
+        
         return res;
                 
     } else if(obj.type === "circle") {
@@ -468,16 +470,50 @@ function process(objs) {
                     
                     resPolygonPartsArray["polygon_" +index] = {};
                     resPolygonPartsArray["polygon_" +index].path = solution_diff.length === 0 ? _copyPath(solution_diff_reverse) : _copyPath(solution_diff);
-                    resPolygonPartsArray["polygon_" +index].souce = solution_diff.length === 0 ? source1 : source0;
+                    resPolygonPartsArray["polygon_" +index].source = {};
+
+                    for (var id in source1) {
+                        if (resPolygonPartsArray["polygon_" +index].source.hasOwnProperty(id)) {
+                            resPolygonPartsArray["polygon_" +index].source[id] += source1[id];
+                        } else {
+                            resPolygonPartsArray["polygon_" +index].source[id] = source1[id];
+                        }
+                    }
+                    for (var id in source0) {
+                        if (resPolygonPartsArray["polygon_" +index].source.hasOwnProperty(id)) {
+                            resPolygonPartsArray["polygon_" +index].source[id] += source0[id];
+                        } else {
+                            resPolygonPartsArray["polygon_" +index].source[id] = source0[id];
+                        }
+                    }
+                    
                     index++;
                     
                     resPolygonPartsArray["polygon_" +index] = {};
                     resPolygonPartsArray["polygon_" +index].path = _copyPath(solution_intersect);
-                    resPolygonPartsArray["polygon_" +index].souce = solution_diff.length === 0 ? source0 : source1;
-                    index++;
-                    //for (var j = 0; j < solution_intersect.length; j++) {
+                    resPolygonPartsArray["polygon_" +index].source = {};
+                    
+                    if (solution_diff.length != 0) {
                         
-                    //}
+                        for (var id in source1) {
+                            if (resPolygonPartsArray["polygon_" +index].source.hasOwnProperty(id)) {
+                                resPolygonPartsArray["polygon_" +index].source[id] += source1[id];
+                            } else {
+                                resPolygonPartsArray["polygon_" +index].source[id] = source1[id];
+                            }
+                        }
+                    } else {
+                        for (var id in source0) {
+                            if (resPolygonPartsArray["polygon_" +index].source.hasOwnProperty(id)) {
+                                resPolygonPartsArray["polygon_" +index].source[id] += source0[id];
+                            } else {
+                                resPolygonPartsArray["polygon_" +index].source[id] = source0[id];
+                            }
+                        }
+                        
+                    }
+                    
+                    index++;
                     
                     breakOut = true;
                     break;
@@ -490,18 +526,48 @@ function process(objs) {
                     
                     resPolygonPartsArray["polygon_" +index] = {};
                     resPolygonPartsArray["polygon_" +index].path = _copyPath(solution_intersect);
-                    resPolygonPartsArray["polygon_" +index].souce = 'intersect';
+                    resPolygonPartsArray["polygon_" +index].source = {};
+                    
+                    for (var id in source1) {
+                        if (resPolygonPartsArray["polygon_" +index].source.hasOwnProperty(id)) {
+                            resPolygonPartsArray["polygon_" +index].source[id] += source1[id];
+                        } else {
+                            resPolygonPartsArray["polygon_" +index].source[id] = source1[id];
+                        }
+                    }
+                    for (var id in source0) {
+                        if (resPolygonPartsArray["polygon_" +index].source.hasOwnProperty(id)) {
+                            resPolygonPartsArray["polygon_" +index].source[id] += source0[id];
+                        } else {
+                            resPolygonPartsArray["polygon_" +index].source[id] = source0[id];
+                        }
+                    }
                     index++;
                     
                     resPolygonPartsArray["polygon_" +index] = {};
                     resPolygonPartsArray["polygon_" +index].path = _copyPath(solution_diff);
-                    resPolygonPartsArray["polygon_" +index].souce = source0;
+                    resPolygonPartsArray["polygon_" +index].source = {};
+                    for (var id in source0) {
+                        if (resPolygonPartsArray["polygon_" +index].source.hasOwnProperty(id)) {
+                            resPolygonPartsArray["polygon_" +index].source[id] += source0[id];
+                        } else {
+                            resPolygonPartsArray["polygon_" +index].source[id] = source0[id];
+                        }
+                    }
                     index++;
                     
                     resPolygonPartsArray["polygon_" +index] = {};
                     resPolygonPartsArray["polygon_" +index].path = _copyPath(solution_diff_reverse);
-                    resPolygonPartsArray["polygon_" +index].souce = source1;
+                    resPolygonPartsArray["polygon_" +index].source = {};
+                    for (var id in source1) {
+                        if (resPolygonPartsArray["polygon_" +index].source.hasOwnProperty(id)) {
+                            resPolygonPartsArray["polygon_" +index].source[id] += source1[id];
+                        } else {
+                            resPolygonPartsArray["polygon_" +index].source[id] = source1[id];
+                        }
+                    }
                     index++;
+                    
                     
                     breakOut = true;
                     break;
@@ -520,13 +586,118 @@ function process(objs) {
     console.log(PlyList);
     
     mapping(PlyList, resPolygonPartsArray);
-    
-    
     //console.log(resLineArray);
 }
 
+function _createElement(path) {
+    if (path[0] instanceof Array) {
+        var polyTree = new MyPolytree();
+        polyTree.createByPaths(path);
+        return polyTree;
+    } else if (path.length === 2){
+        
+        var seg = new MySegment();
+        seg.createByPath(path);
+        return seg;
+    } else {
+        var poly = new MyPolygon();
+        poly.createByPath(path);
+        //console.log(poly);
+        return poly;
+    }
+}
+
 function mapping(myList, pathList) {
-    //var record = [];
+    var record = [];
+    var nameList = [];
+    for(var poly in pathList) {
+        var polygon = pathList[poly];
+        record.push(_createElement(polygon.path));
+        
+        var tmp = [];
+        for(var id in polygon.source) {
+            tmp.push(id);
+        }
+        
+        nameList.push(tmp);
+    }
+    
+    for (var i = 0; i < nameList.length; i++) {
+        if (nameList[i].length === 1) {
+            record[i].id = nameList[i][0];
+        }
+        var edge = record[i].root;
+        while(edge) {
+            var pointOut0 = edge.point0;
+            var pointOut1 = edge.point1;
+            
+            for (var j = 0; j < nameList[i].length; j++) {
+                var oriPoly = myList[nameList[i][j]];
+                
+                var edge2 = oriPoly.root;
+                
+                while(edge2) {
+                    
+                    var pointIn0 = edge2.point0;
+                    var pointIn1 = edge2.point1;
+                    
+                    var same0 = MyMath.equalPoints(pointOut0, pointIn0);
+                    var same1 = MyMath.equalPoints(pointOut1, pointIn1);
+                    
+                    if (same0) {
+                        pointOut0.id = pointIn0.id;
+                    }
+                    
+                    if (same1) {
+                        pointOut1.id = pointIn1.id;
+                    }
+                    
+                    if(same0 && same1) {
+                        edge.id = edge2.id;
+                    }
+                    
+                    edge2 = edge2.next;
+                }
+                
+                
+            }
+            
+            edge = edge.next;
+        }
+    }
+    
+    
+    
+    
+    //console.log(nameList);
+    console.log(record);
+    
+    /*
+    
+    for (var poly in pathList) {
+        var path = pathList[poly];
+        if (path.source === 'intersect') {
+            //create a new poly
+        } else {
+            for(var i = 0; i < myList.length; i++) {
+                if (path.source === myList[i].id) {
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    break;
+                }
+            }
+        }
+        
+    }
+    
+    */
+    
+    /*
     for (var path in pathList) {
         var _path = pathList[path].path;
         if (_path[0] instanceof Array) {
@@ -542,7 +713,7 @@ function mapping(myList, pathList) {
                             var point1 = edge.point1;
                             
                             if(MyMath.equalPoints(_point, point0) || MyMath.equalPoints(_point, point1)) {
-                                /*
+                                
                                 if(!record[path]) {
                                     record[path] = [];
                                     record[path].push(id);
@@ -558,7 +729,7 @@ function mapping(myList, pathList) {
                                         record[path].push(id);
                                     }
                                 }
-                                */
+                                
                             }
                             
                             
@@ -578,7 +749,7 @@ function mapping(myList, pathList) {
                         var point0 = edge.point0;
                         var point1 = edge.point1;
                         if(MyMath.equalPoints(_point, point0) || MyMath.equalPoints(_point, point1)) {
-                            /*
+                            
                             if(!record[path]) {
                                 record[path] = [];
                                 record[path].push(id);
@@ -594,7 +765,7 @@ function mapping(myList, pathList) {
                                     record[path].push(id);
                                 }
                             }
-                            */
+                            
                         }
                         edge = edge.next;
                     }
@@ -604,6 +775,6 @@ function mapping(myList, pathList) {
             }
         }
     }
-    
+    */
     //console.log(record);
 }
