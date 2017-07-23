@@ -1,9 +1,7 @@
-
 var POINT_ID        = 0;
 var SEGMENT_ID      = 0;
 var POLYGON_ID      = 0;
 var POLYGTREE_ID    = 0;
-
 
 function MyPoint(x, y){
     if (!y) {
@@ -20,10 +18,14 @@ MyPoint.prototype._generateID = function () {
     return "my_point_" + POINT_ID++;
 }
 
-
-function MySegment(point0, point1){
-    this.point0 = point0;
-    this.point1 = point1;
+function MySegment(point0, point1, path){
+    if (path) {
+        this.createByPath(path);
+    } else {
+        this.point0 = point0;
+        this.point1 = point1;
+    }
+    
     this.next = null;
     this.pre = null;
     this.id = this._generateID();
@@ -41,10 +43,13 @@ MySegment.prototype.createByPath = function (path) {
     this.point1 = point1;
 }
 
-function MyPolygon(){
+function MyPolygon(path){
     this.root = null; //some edge
     this.end = null;
     this.id = this._generateID();
+    if (path) {
+        this.createByPath(path);
+    }
 };
 
 MyPolygon.prototype._generateID = function () {
@@ -78,9 +83,12 @@ MyPolygon.prototype.createByPath = function (path) {
 }
 
 
-function MyPolytree(){
+function MyPolytree(paths){
     this.polygons = [];
     this.id = this._generateID();
+    if(paths) {
+        this.createByPaths(paths);
+    }
 };
 
 MyPolytree.prototype._generateID = function () {
@@ -88,19 +96,12 @@ MyPolytree.prototype._generateID = function () {
 };
 
 MyPolytree.prototype.createByPaths = function (paths) {
-    
     for(var i = 0; i < paths.length; i++) {
         var poly = new MyPolygon();
         this.polygons.push(poly.createByPath(paths[i]));
     }
     
 }
-
-
-
-
-
-
 
 var MyMath = {};
 
@@ -109,7 +110,7 @@ MyMath.getLength = function(ptA, ptB) {
 };
 
 MyMath.equalPoints = function(point0, point1){
-    if(point0.x === point1.x && point0.y === point1.y) {
+    if(point0.X === point1.X && point0.Y === point1.Y) {
         return true;
     } else {
         return false;

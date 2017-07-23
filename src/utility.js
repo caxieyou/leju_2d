@@ -1,16 +1,20 @@
-var TYPE = {};
-TYPE.CIRCLE     = 0;
-TYPE.RECT       = 1;
-TYPE.LINEPATH   = 2;
+//Support 3 types
+var TYPE = {
+    CIRCLE : 0,
+    RECT   : 1,
+    LINE   : 2
+};
 
-var PlyList = {};
-//var ID = 0;
+//All the elements created on the GUI
+var ElementsPool = {};
+var LinePool = {};
+var GUI = {};
 
-function generateID() {
-    return ID++;
-}
+GUI.CIRCLE = {};
+GUI.RECT = {};
+GUI.LINE = {};
 
-function createCircle(options) {
+GUI.CIRCLE.create = function(options) {
     var circle = new fabric.Circle({
                             radius      : 0, 
                             left        : 0, 
@@ -20,12 +24,12 @@ function createCircle(options) {
                             selectable  : false
                         });
                         
-    circle.center = new MyPoint(options.e.offsetX, options.e.offsetY);
+    circle.center = new ClipperLib.IntPoint(options.e.offsetX, options.e.offsetY);
     
     return circle;
-}
+};
 
-function updateCircle(circle, options) {
+GUI.CIRCLE.update = function(circle, options) {
     var corner = new MyPoint(options.e.offsetX, options.e.offsetY);
 
     circle.set({
@@ -33,9 +37,9 @@ function updateCircle(circle, options) {
         "left"  : circle.center.X - radius,
         "top"   : circle.center.Y - radius
     });
-}
+};
 
-function createRect(options) {
+GUI.RECT.create = function(options) {
     var rect = new fabric.Rect({
         left        : 0, 
         top         : 0, 
@@ -46,12 +50,12 @@ function createRect(options) {
         selectable  : false
     });
 
-    rect.start = new MyPoint(options.e.offsetX, options.e.offsetY);
+    rect.start = new ClipperLib.IntPoint(options.e.offsetX, options.e.offsetY);
     return rect;
-}
+};
 
-function updateRect(rect, options) {
-    var corner = new MyPoint(options.e.offsetX, options.e.offsetY);
+GUI.RECT.update = function(rect, options) {
+    var corner = new ClipperLib.IntPoint(options.e.offsetX, options.e.offsetY);
     
     rect.set({
         left    : Math.min(rect.start.X, corner.X),
@@ -59,9 +63,9 @@ function updateRect(rect, options) {
         width   : Math.abs(rect.start.X - corner.X),
         height  : Math.abs(rect.start.Y - corner.Y)
     });
-}
+};
 
-function createLinePath() {
+GUI.LINE.create = function() {
     var line = new fabric.Path('M 0 0');
     line.set({ 
                 fill: 'transparent', 
@@ -70,27 +74,29 @@ function createLinePath() {
             });
 
     return line;
-}
+};
 
-function updateLinePath(line, options){
+GUI.LINE.update = function(line, options){
     if(line.path.length === 1 && line.isInit === undefined) {
         line.set({
                     left: options.e.offsetX,
                     top : options.e.offsetY
                 });
         line.isInit = true;
-        line.start = new MyPoint(options.e.offsetX, options.e.offsetY);
+        line.start = new ClipperLib.IntPoint(options.e.offsetX, options.e.offsetY);
     } else {
-        var commandArray = [];
-        commandArray[0] = 'L';
-        commandArray[1] = options.e.offsetX - line.start.X;
-        commandArray[2] = options.e.offsetY - line.start.Y;
-        line.path[line.path.length] = commandArray;
-        _updateLine(line);
+        if (line.path.length < 2) {
+            var commandArray = [];
+            commandArray[0] = 'L';
+            commandArray[1] = options.e.offsetX - line.start.X;
+            commandArray[2] = options.e.offsetY - line.start.Y;
+            line.path[line.path.length] = commandArray;
+            this._updateLine(line);
+        }
     }
-}
+};
 
-function _updateLine(line) {
+GUI.LINE._updateLine = function(line) {
     var dims = line._parseDimensions(),
         prevDims = line.prevDims || {},
         leftDiff = dims.left - (prevDims.left || 0),
@@ -115,102 +121,60 @@ function _updateLine(line) {
     
     line.prevDims = dims;
     line.setCoords();
-}
+};
 
-function _isNotSingle(paths) {
+var UTILITY = {};
+
+UTILITY.isNotSingle = function (objs) {
     var num = 0;
-    for(var path in paths) {
+    for(var obj in objs) {
         num++;
         if(num > 1) {
             return true;
         }
     }
     return false;
-}
+};
 
-function _isNotEmpty(paths) {
+UTILITY.isNotEmpty = function (objs) {
     var num = 0;
-    for(var path in paths) {
+    for(var path in objs) {
         num++;
         if(num > 0) {
             return true;
         }
     }
     return false;
-}
+};
 
-function _getPath(obj) {
+UTILITY.getPath = function(obj) {
     if(obj.type === "rect") {
-        
-        //var poly = new MyPolygon();
-        
-        var point_0 = new MyPoint(obj.start.X,                  obj.start.Y                  );
-        var point_1 = new MyPoint(obj.start.X + obj.getWidth(), obj.start.Y                  );
-        var point_2 = new MyPoint(obj.start.X + obj.getWidth(), obj.start.Y + obj.getHeight());
-        var point_3 = new MyPoint(obj.start.X,                  obj.start.Y + obj.getHeight());
-        
-        
-        var seg_0 = new MySegment(point_0, point_1);
-        var seg_1 = new MySegment(point_1, point_2);
-        var seg_2 = new MySegment(point_2, point_3);
-        var seg_3 = new MySegment(point_3, point_0);
-        
-        //console.log(seg_0);
-        seg_0.next = seg_1;
-        seg_1.next = seg_2;
-        seg_2.next = seg_3;
-        
-        seg_3.pre = seg_2;
-        seg_2.pre = seg_1;
-        seg_1.pre = seg_0;
-        
-        
-        var rectPoly = new MyPolygon();
-        
-        rectPoly.root = seg_0;
-        rectPoly.end = seg_3;
-        
-        //console.log(rectPoly);
-        
-        PlyList[rectPoly.id] = rectPoly;
-        
-        var res = {};
-        res.path = [{X: obj.start.X,                    Y: obj.start.Y                  }, 
-                    {X: obj.start.X + obj.getWidth(),   Y: obj.start.Y                  }, 
-                    {X: obj.start.X + obj.getWidth(),   Y: obj.start.Y + obj.getHeight()}, 
-                    {X: obj.start.X,                    Y: obj.start.Y + obj.getHeight()}];     
-        res.source = {};
-        res.source[rectPoly.id] = 1;
-        
-        return res;
-                
+        var path = [new ClipperLib.IntPoint(obj.start.X,                    obj.start.Y),
+                    new ClipperLib.IntPoint(obj.start.X + obj.getWidth(),   obj.start.Y),
+                    new ClipperLib.IntPoint(obj.start.X + obj.getWidth(),   obj.start.Y + obj.getHeight()),
+                    new ClipperLib.IntPoint(obj.start.X,                    obj.start.Y + obj.getHeight())];
+        return path;
     } else if(obj.type === "circle") {
         //circle is not ready
     } else if(obj.type === "path") {
         var path = [];
         for (var i = 0; i < obj.path.length; i++) {
-            if(obj.path[i][0] === 'M' || obj.path[i][0] === 'L'){
-                path.push(
-                          { X: obj.path[i][1] + obj.start.X, 
-                            Y: obj.path[i][2] + obj.start.Y}
-                         );
+            var _type = obj.path[i][0];
+            if(_type === 'M' || _type === 'L'){
+                path.push(new ClipperLib.IntPoint(obj.path[i][1] + obj.start.X, obj.path[i][2] + obj.start.Y));
             }
         }
-        var res = {};
-        res.path = path;
-        res.id = '';
-        return res;
+        return path;
     }
 }
 
-function _copyPath(path) {
+UTILITY.copyPath(path) {
     var res = [];
     if (path[0] instanceof Array) {
         for(var i = 0; i < path.length; i++) {
             var tmp = [];
             for(var j = 0; j < path[i].length; j++) {
-                //var idx = isReverse ? path[i].length - j - 1: j;
-                var point = new MyPoint(path[i][j]);
+                var point = new ClipperLib.IntPoint(path[i][j]);
                 tmp.push(point);
             }
             res[i] = tmp;
@@ -219,11 +183,9 @@ function _copyPath(path) {
         if (res.length === 1) {
             res = res[0];
         }
-
     } else {
         for(var i = 0; i < path.length; i++) {
-            //var idx = isReverse ? path.length - i - 1: i;
-            var point = new MyPoint(path[i]);
+            var point = new ClipperLib.IntPoint(path[i]);
             res.push(point);
         }
     }
@@ -234,7 +196,7 @@ function _copyPath(path) {
 function _getSegements(path, type) {
     var res = [];
     switch (type) {
-        case TYPE.LINEPATH:
+        case TYPE.LINE:
         {
             for(var i = 0; i < path.length - 1; i++) {
                 var segment = new MySegment(path[i], path[i+1]);
@@ -349,55 +311,30 @@ function _intersectSegmentRect(segement, rect) {
     return intersect;
 }
 
-function process(objs) {
+function splitElements(objs) {
     var index = 0;
-    var resPolygonArray = [];
-    var resPolygonPartsArray = [];
+    var resPolygonSplit = [];
     var resLineArray = [];
-    PlyList = [];
+    ElementsPool = [];
     POINT_ID        = 0;
     SEGMENT_ID      = 0;
     POLYGON_ID      = 0;
     POLYGTREE_ID    = 0;
     for(var i = 0; i < objs.length; i++) {
         if (objs[i].type === "path") {
-            resLineArray["line_" +index] = _getPath(objs[i]);
-            index++;
+            var path = UTILITY.getPath(objs[i]);
+            var segment = new MySegment(null, null, path);
+            LinePool[segment.id] = segment;
+            var clipperObj = new ClipperObject(path, objs[i].type, segment.id);
+            resLineArray[clipperObj.id] = clipperObj;
         } 
         else if (objs[i].type === "rect"){
-            resPolygonArray["polygon_" +index] = _getPath(objs[i]);
-            index++;
+            var path = UTILITY.getPath(objs[i]);
+            var rect = new MyPolygon(path);
+            var clipperObj = new ClipperObject(path, objs[i].type, rect.id);
+            ElementsPool[rect.id] = rect;
+            resPolygonSplit[clipperObj.id] = clipperObj;
         }
-    }
-
-    if (_isNotEmpty(resLineArray)) {
-        /*
-        for(var line in resLineArray) {
-            //get all the line segments
-            var segements = _getSegements(resLineArray[line], TYPE.LINEPATH);
-            for (var rect in resPolygonArray) {
-                //calculate the intersection between line and rect
-                for(var i = 0; i < segements.length; i++){
-                    var intersect = null; 
-                    intersect = _intersectSegmentRect(segements[i], resPolygonArray[rect].path);
-                    
-                    if(intersect) {
-                        resPolygonPartsArray["polygon_" + index] = intersect[0];
-                        index++;
-                        resPolygonPartsArray["polygon_" + index] = intersect[1];
-                        index++;
-                    } else {
-                        if(!resPolygonPartsArray[rect]) {
-                            resPolygonPartsArray[rect] = resPolygonArray[rect];
-                        }
-                    }
-                }
-                
-            }
-        }
-        */
-    } else {
-        resPolygonPartsArray = resPolygonArray;
     }
     
     var cpr = new ClipperLib.Clipper();
@@ -409,9 +346,9 @@ function process(objs) {
     
     var breakOut = false;
 
-    while(true && _isNotSingle(resPolygonPartsArray)) {
-        for (var key0 in resPolygonPartsArray) {
-            for (var key1 in resPolygonPartsArray) {
+    while(true && UTILITY.isNotSingle(resPolygonSplit)) {
+        for (var key0 in resPolygonSplit) {
+            for (var key1 in resPolygonSplit) {
                 breakOut = false;
                 
                 //skip if same
@@ -421,16 +358,16 @@ function process(objs) {
                 
                 //calculate positive
                 cpr.Clear();
-                if(resPolygonPartsArray[key0].path[0] instanceof Array) {
-                    cpr.AddPaths(resPolygonPartsArray[key0].path, ClipperLib.PolyType.ptSubject, true);  // true means closed path
+                if(resPolygonSplit[key0].path[0] instanceof Array) {
+                    cpr.AddPaths(resPolygonSplit[key0].path, ClipperLib.PolyType.ptSubject, true);  // true means closed path
                 }else {
-                    cpr.AddPath(resPolygonPartsArray[key0].path, ClipperLib.PolyType.ptSubject, true);  // true means closed path
+                    cpr.AddPath(resPolygonSplit[key0].path, ClipperLib.PolyType.ptSubject, true);  // true means closed path
                 }
                 
-                if(resPolygonPartsArray[key1][0] instanceof Array) {
-                    cpr.AddPaths(resPolygonPartsArray[key1].path, ClipperLib.PolyType.ptClip, true);
+                if(resPolygonSplit[key1][0] instanceof Array) {
+                    cpr.AddPaths(resPolygonSplit[key1].path, ClipperLib.PolyType.ptClip, true);
                 }else {
-                    cpr.AddPath(resPolygonPartsArray[key1].path, ClipperLib.PolyType.ptClip, true);
+                    cpr.AddPath(resPolygonSplit[key1].path, ClipperLib.PolyType.ptClip, true);
                 }
                 
                 cpr.Execute(ClipperLib.ClipType.ctIntersection, solution_intersect, ClipperLib.PolyFillType.pftNonZero, ClipperLib.PolyFillType.pftNonZero);
@@ -438,16 +375,16 @@ function process(objs) {
                 //debugger;
                 //calculate with reverse
                 cpr.Clear();
-                if(resPolygonPartsArray[key1].path[0] instanceof Array) {
-                    cpr.AddPaths(resPolygonPartsArray[key1].path, ClipperLib.PolyType.ptSubject, true);  // true means closed path
+                if(resPolygonSplit[key1].path[0] instanceof Array) {
+                    cpr.AddPaths(resPolygonSplit[key1].path, ClipperLib.PolyType.ptSubject, true);  // true means closed path
                 }else {
-                    cpr.AddPath(resPolygonPartsArray[key1].path, ClipperLib.PolyType.ptSubject, true);  // true means closed path
+                    cpr.AddPath(resPolygonSplit[key1].path, ClipperLib.PolyType.ptSubject, true);  // true means closed path
                 }
                 
-                if(resPolygonPartsArray[key0].path[0] instanceof Array) {
-                    cpr.AddPaths(resPolygonPartsArray[key0].path, ClipperLib.PolyType.ptClip, true);
+                if(resPolygonSplit[key0].path[0] instanceof Array) {
+                    cpr.AddPaths(resPolygonSplit[key0].path, ClipperLib.PolyType.ptClip, true);
                 }else {
-                    cpr.AddPath(resPolygonPartsArray[key0].path, ClipperLib.PolyType.ptClip, true);
+                    cpr.AddPath(resPolygonSplit[key0].path, ClipperLib.PolyType.ptClip, true);
                 }
                 cpr.Execute(ClipperLib.ClipType.ctIntersection, solution_intersect_reverse, ClipperLib.PolyFillType.pftNonZero, ClipperLib.PolyFillType.pftNonZero);
                 cpr.Execute(ClipperLib.ClipType.ctDifference,   solution_diff_reverse,      ClipperLib.PolyFillType.pftNonZero, ClipperLib.PolyFillType.pftNonZero);
@@ -463,111 +400,50 @@ function process(objs) {
                 //one includes the other
                 else if(solution_diff.length === 0 || solution_diff_reverse.length === 0){
                     
-                    var source0 = resPolygonPartsArray[key0].source;
-                    var source1 = resPolygonPartsArray[key1].source;
-                    delete resPolygonPartsArray[key0];
-                    delete resPolygonPartsArray[key1];
+                    var source0 = resPolygonSplit[key0].source;
+                    var source1 = resPolygonSplit[key1].source;
+                    delete resPolygonSplit[key0];
+                    delete resPolygonSplit[key1];
                     
-                    resPolygonPartsArray["polygon_" +index] = {};
-                    resPolygonPartsArray["polygon_" +index].path = solution_diff.length === 0 ? _copyPath(solution_diff_reverse) : _copyPath(solution_diff);
-                    resPolygonPartsArray["polygon_" +index].source = {};
-
-                    for (var id in source1) {
-                        if (resPolygonPartsArray["polygon_" +index].source.hasOwnProperty(id)) {
-                            resPolygonPartsArray["polygon_" +index].source[id] += source1[id];
-                        } else {
-                            resPolygonPartsArray["polygon_" +index].source[id] = source1[id];
-                        }
-                    }
-                    for (var id in source0) {
-                        if (resPolygonPartsArray["polygon_" +index].source.hasOwnProperty(id)) {
-                            resPolygonPartsArray["polygon_" +index].source[id] += source0[id];
-                        } else {
-                            resPolygonPartsArray["polygon_" +index].source[id] = source0[id];
-                        }
-                    }
                     
-                    index++;
+                    var clipperObj = new ClipperObject(solution_diff.length === 0 ? UTILITY.copyPath(solution_diff_reverse) : UTILITY.copyPath(solution_diff), 
+                                                       'polygon');
                     
-                    resPolygonPartsArray["polygon_" +index] = {};
-                    resPolygonPartsArray["polygon_" +index].path = _copyPath(solution_intersect);
-                    resPolygonPartsArray["polygon_" +index].source = {};
+                    clipperObj.addSource(source0);
+                    clipperObj.addSource(source1);
+                    resPolygonSplit[clipperObj.id] = clipperObj;
                     
+                    
+                    var clipperObj2 = new ClipperObject(UTILITY.copyPath(solution_intersect), 'polygon');
                     if (solution_diff.length != 0) {
-                        
-                        for (var id in source1) {
-                            if (resPolygonPartsArray["polygon_" +index].source.hasOwnProperty(id)) {
-                                resPolygonPartsArray["polygon_" +index].source[id] += source1[id];
-                            } else {
-                                resPolygonPartsArray["polygon_" +index].source[id] = source1[id];
-                            }
-                        }
+                        clipperObj2.addSource(source1);
                     } else {
-                        for (var id in source0) {
-                            if (resPolygonPartsArray["polygon_" +index].source.hasOwnProperty(id)) {
-                                resPolygonPartsArray["polygon_" +index].source[id] += source0[id];
-                            } else {
-                                resPolygonPartsArray["polygon_" +index].source[id] = source0[id];
-                            }
-                        }
-                        
+                        clipperObj2.addSource(source0);
                     }
                     
-                    index++;
+                    resPolygonSplit[clipperObj2.id] = clipperObj2;
                     
                     breakOut = true;
                     break;
                 } else {
                     //debugger;
-                    var source0 = resPolygonPartsArray[key0].source;
-                    var source1 = resPolygonPartsArray[key1].source;
-                    delete resPolygonPartsArray[key0];
-                    delete resPolygonPartsArray[key1];
+                    var source0 = resPolygonSplit[key0].source;
+                    var source1 = resPolygonSplit[key1].source;
+                    delete resPolygonSplit[key0];
+                    delete resPolygonSplit[key1];
                     
-                    resPolygonPartsArray["polygon_" +index] = {};
-                    resPolygonPartsArray["polygon_" +index].path = _copyPath(solution_intersect);
-                    resPolygonPartsArray["polygon_" +index].source = {};
+                    var clipperObj = new ClipperObject(UTILITY.copyPath(solution_intersect), 'polygon');
+                    clipperObj.addSource(source0);
+                    clipperObj.addSource(source1);
+                    resPolygonSplit[clipperObj.id] = clipperObj;
                     
-                    for (var id in source1) {
-                        if (resPolygonPartsArray["polygon_" +index].source.hasOwnProperty(id)) {
-                            resPolygonPartsArray["polygon_" +index].source[id] += source1[id];
-                        } else {
-                            resPolygonPartsArray["polygon_" +index].source[id] = source1[id];
-                        }
-                    }
-                    for (var id in source0) {
-                        if (resPolygonPartsArray["polygon_" +index].source.hasOwnProperty(id)) {
-                            resPolygonPartsArray["polygon_" +index].source[id] += source0[id];
-                        } else {
-                            resPolygonPartsArray["polygon_" +index].source[id] = source0[id];
-                        }
-                    }
-                    index++;
+                    var clipperObj2 = new ClipperObject(UTILITY.copyPath(solution_diff), 'polygon');
+                    clipperObj2.addSource(source0);
+                    resPolygonSplit[clipperObj2.id] = clipperObj2;
                     
-                    resPolygonPartsArray["polygon_" +index] = {};
-                    resPolygonPartsArray["polygon_" +index].path = _copyPath(solution_diff);
-                    resPolygonPartsArray["polygon_" +index].source = {};
-                    for (var id in source0) {
-                        if (resPolygonPartsArray["polygon_" +index].source.hasOwnProperty(id)) {
-                            resPolygonPartsArray["polygon_" +index].source[id] += source0[id];
-                        } else {
-                            resPolygonPartsArray["polygon_" +index].source[id] = source0[id];
-                        }
-                    }
-                    index++;
-                    
-                    resPolygonPartsArray["polygon_" +index] = {};
-                    resPolygonPartsArray["polygon_" +index].path = _copyPath(solution_diff_reverse);
-                    resPolygonPartsArray["polygon_" +index].source = {};
-                    for (var id in source1) {
-                        if (resPolygonPartsArray["polygon_" +index].source.hasOwnProperty(id)) {
-                            resPolygonPartsArray["polygon_" +index].source[id] += source1[id];
-                        } else {
-                            resPolygonPartsArray["polygon_" +index].source[id] = source1[id];
-                        }
-                    }
-                    index++;
-                    
+                    var clipperObj3 = new ClipperObject(UTILITY.copyPath(solution_diff_reverse), 'polygon');
+                    clipperObj3.addSource(source1);
+                    resPolygonSplit[clipperObj3.id] = clipperObj3;
                     
                     breakOut = true;
                     break;
@@ -582,28 +458,19 @@ function process(objs) {
         }
     }
 
-    console.log(resPolygonPartsArray);
-    console.log(PlyList);
+    console.log(resPolygonSplit);
+    console.log(ElementsPool);
     
-    mapping(PlyList, resPolygonPartsArray);
-    //console.log(resLineArray);
+    mapping(ElementsPool, resPolygonSplit);
 }
 
 function _createElement(path) {
     if (path[0] instanceof Array) {
-        var polyTree = new MyPolytree();
-        polyTree.createByPaths(path);
-        return polyTree;
+        return new MyPolytree(path);
     } else if (path.length === 2){
-        
-        var seg = new MySegment();
-        seg.createByPath(path);
-        return seg;
+        return new MySegment(null, null, path);
     } else {
-        var poly = new MyPolygon();
-        poly.createByPath(path);
-        //console.log(poly);
-        return poly;
+        return new MyPolygon(path);
     }
 }
 
@@ -658,123 +525,10 @@ function mapping(myList, pathList) {
                     
                     edge2 = edge2.next;
                 }
-                
-                
             }
             
             edge = edge.next;
         }
     }
-    
-    
-    
-    
-    //console.log(nameList);
     console.log(record);
-    
-    /*
-    
-    for (var poly in pathList) {
-        var path = pathList[poly];
-        if (path.source === 'intersect') {
-            //create a new poly
-        } else {
-            for(var i = 0; i < myList.length; i++) {
-                if (path.source === myList[i].id) {
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    break;
-                }
-            }
-        }
-        
-    }
-    
-    */
-    
-    /*
-    for (var path in pathList) {
-        var _path = pathList[path].path;
-        if (_path[0] instanceof Array) {
-            for (var j = 0; j < _path.length; j++) {
-                for (var k = 0; k < _path[j].length; k++) {
-                    var _point = _path[j][k];
-                    
-                    for (var m = 0; m < myList.length; m++) {
-                        var edge = myList[m].root;
-                        var id = myList[m].id;
-                        while (edge) {
-                            var point0 = edge.point0;
-                            var point1 = edge.point1;
-                            
-                            if(MyMath.equalPoints(_point, point0) || MyMath.equalPoints(_point, point1)) {
-                                
-                                if(!record[path]) {
-                                    record[path] = [];
-                                    record[path].push(id);
-                                } else {
-                                    var unique = true;
-                                    for(var n = 0; n < record[path].length; n++) {
-                                        if(record[path][n] === id) {
-                                            unique = false;
-                                        }
-                                    }
-                                    
-                                    if(unique) {
-                                        record[path].push(id);
-                                    }
-                                }
-                                
-                            }
-                            
-                            
-                            edge = edge.next;
-                        }
-                    }
-                }
-            }
-        } else {
-            for (var j = 0; j < _path.length; j++) {
-                var _point = _path[j];
-                
-                for (var m = 0; m < myList.length; m++) {
-                    var edge = myList[m].root;
-                    var id = myList[m].id;
-                    while (edge) {
-                        var point0 = edge.point0;
-                        var point1 = edge.point1;
-                        if(MyMath.equalPoints(_point, point0) || MyMath.equalPoints(_point, point1)) {
-                            
-                            if(!record[path]) {
-                                record[path] = [];
-                                record[path].push(id);
-                            } else {
-                                var unique = true;
-                                for(var n = 0; n < record[path].length; n++) {
-                                    if(record[path][n] === id) {
-                                        unique = false;
-                                    }
-                                }
-                                
-                                if(unique) {
-                                    record[path].push(id);
-                                }
-                            }
-                            
-                        }
-                        edge = edge.next;
-                    }
-                }                                                       
-                
-                
-            }
-        }
-    }
-    */
-    //console.log(record);
 }
