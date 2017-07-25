@@ -95,8 +95,8 @@ MyPolytree.prototype._generateID = function () {
 
 MyPolytree.prototype.createByPaths = function (paths) {
     for(var i = 0; i < paths.length; i++) {
-        var poly = new MyPolygon();
-        this.polygons.push(poly.createByPath(paths[i]));
+        var poly = new MyPolygon(paths[i]);
+        this.polygons.push(poly);
     }
     
 };

@@ -168,50 +168,6 @@ UTILITY._getPath = function(obj) {
     }
 };
 
-UTILITY.split = function(objs) {
-    var clipperSplit = [];
-    var resLineArray = [];
-    ElementsPool = [];
-    
-    MyMath.reset();
-    ClipperObject.reset();
-    
-    for(var i = 0; i < objs.length; i++) {
-        if (objs[i].type === "path") {
-            var path = UTILITY._getPath(objs[i]);
-            var segment = new MySegment(null, null, path);
-            LinePool[segment.id] = segment;
-            var clipperObj = new ClipperObject(path, objs[i].type, segment.id);
-            resLineArray[clipperObj.id] = clipperObj;
-        } 
-        else if (objs[i].type === "rect"){
-            var path = UTILITY._getPath(objs[i]);
-            var rect = new MyPolygon(path);
-            var clipperObj = new ClipperObject(path, objs[i].type, rect.id);
-            ElementsPool[rect.id] = rect;
-            clipperSplit[clipperObj.id] = clipperObj;
-        }
-    }
-    
-    var clipperWrap = new ClipperWrap();
-
-    var isCompleted = false;
-
-    while(true && UTILITY._isNotSingle(clipperSplit)) {
-        isCompleted = clipperWrap.split(clipperSplit);
-        
-        if(isCompleted) {
-            break;
-        }
-    }
-
-    console.log(clipperSplit);
-    console.log(ElementsPool);
-    
-    var res = UTILITY._mapping(ElementsPool, clipperSplit);
-    console.log(res);
-}
-
 UTILITY._copyElement = function(path) {
     if (path[0] instanceof Array) {
         return new MyPolytree(path);
@@ -220,13 +176,13 @@ UTILITY._copyElement = function(path) {
     } else {
         return new MyPolygon(path);
     }
-}
+};
 
-UTILITY._mapping = function(myList, pathList) {
+UTILITY._mapping = function(myList, clipperList) {
     var result = [];
     var nameList = [];
-    for(var poly in pathList) {
-        var polygon = pathList[poly];
+    for(var poly in clipperList) {
+        var polygon = clipperList[poly];
         result.push(UTILITY._copyElement(polygon.path));
         
         var tmp = [];
@@ -278,5 +234,48 @@ UTILITY._mapping = function(myList, pathList) {
         }
     }
     return result;
-}
+};
 
+UTILITY.split = function(objs) {
+    var clipperPolySplit = [];
+    var clipperLineSplit = [];
+    ElementsPool = [];
+    
+    MyMath.reset();
+    ClipperObject.reset();
+    
+    for(var i = 0; i < objs.length; i++) {
+        if (objs[i].type === "path") {
+            var path = UTILITY._getPath(objs[i]);
+            var segment = new MySegment(null, null, path);
+            LinePool[segment.id] = segment;
+            var clipperObj = new ClipperObject(path, objs[i].type, segment.id);
+            clipperLineSplit[clipperObj.id] = clipperObj;
+        } 
+        else if (objs[i].type === "rect"){
+            var path = UTILITY._getPath(objs[i]);
+            var rect = new MyPolygon(path);
+            var clipperObj = new ClipperObject(path, objs[i].type, rect.id);
+            ElementsPool[rect.id] = rect;
+            clipperPolySplit[clipperObj.id] = clipperObj;
+        }
+    }
+    
+    var clipperWrap = new ClipperWrap();
+
+    var isCompleted = false;
+
+    while(true && UTILITY._isNotSingle(clipperPolySplit)) {
+        isCompleted = clipperWrap.split(clipperPolySplit);
+        
+        if(isCompleted) {
+            break;
+        }
+    }
+
+    console.log(clipperPolySplit);
+    console.log(ElementsPool);
+    
+    var res = UTILITY._mapping(ElementsPool, clipperPolySplit);
+    console.log(res);
+};
