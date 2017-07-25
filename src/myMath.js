@@ -31,7 +31,6 @@ function MySegment(point0, point1, path){
     this.id = this._generateID();
 };
 
-
 MySegment.prototype._generateID = function () {
     return "my_segment_" + SEGMENT_ID++;
 };
@@ -54,7 +53,7 @@ function MyPolygon(path){
 
 MyPolygon.prototype._generateID = function () {
     return "my_polygon_" + POLYGON_ID++;
-}
+};
 
 MyPolygon.prototype.createByPath = function (path) {
     var point_s = new MyPoint(path[0]);
@@ -80,8 +79,7 @@ MyPolygon.prototype.createByPath = function (path) {
     for (var i = 1; i < segs.length; i++) {
         segs[i].pre = segs[i-1];
     }
-}
-
+};
 
 function MyPolytree(paths){
     this.polygons = [];
@@ -101,7 +99,7 @@ MyPolytree.prototype.createByPaths = function (paths) {
         this.polygons.push(poly.createByPath(paths[i]));
     }
     
-}
+};
 
 var MyMath = {};
 
@@ -145,4 +143,11 @@ MyMath.lineSegmentsIntersect = function(seg0, seg1){
     var dx= t*(b.X - a.X),  
         dy= t*(b.Y - a.Y);  
     return { X: Math.round(a.X + dx) , Y: Math.round(a.Y + dy) };
-}  
+};
+
+MyMath.reset = function() {
+    POINT_ID        = 0;
+    SEGMENT_ID      = 0;
+    POLYGON_ID      = 0;
+    POLYGTREE_ID    = 0;
+};

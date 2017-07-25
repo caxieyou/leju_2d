@@ -28,7 +28,7 @@ function onOutput() {
     var objs = canvas.getObjects();
     
     //do the caculation, main Entrance
-    splitElements(objs);
+    UTILITY.split(objs);
 };
 
 function onMouseDown(options) {
