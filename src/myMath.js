@@ -151,3 +151,126 @@ MyMath.reset = function() {
     POLYGON_ID      = 0;
     POLYGTREE_ID    = 0;
 };
+
+/*
+//get All the segments
+function _getSegements(path, type) {
+    var res = [];
+    switch (type) {
+        case TYPE.LINE:
+        {
+            for(var i = 0; i < path.length - 1; i++) {
+                var segment = new MySegment(path[i], path[i+1]);
+                res.push(segment);
+            }
+        }
+        break;
+        
+        case TYPE.RECT:
+        {
+            for(var i = 0; i < path.length; i++) {
+                var segment = new MySegment(path[i], path[(i+1) % path.length]);
+                res.push(segment);
+            }
+        }
+        break;
+    }
+    return res;
+};
+
+function _intersectSegmentRect(segement, rect) {
+    var res = [];
+    var intersect = null;
+    var rectSegments = _getSegements(rect, TYPE.RECT);
+    
+    var record = [];
+    for(var i = 0; i < rectSegments.length; i++) {
+        var inter = MyMath.lineSegmentsIntersect(segement, rectSegments[i]);
+        if(inter) {
+            res.push(inter);
+            record.push(i);
+        }
+    }
+    
+    if (record.length < 2) {
+        intersect = null;
+    } else if(record[1] - record[0] === 1){
+        intersect = [];
+        if (record[0] === 0 && record[1] === 1) {
+            intersect[0] = [{X:rect[0].X,  Y:rect[0].Y}, 
+                            {X:res[0].X,  Y:res[0].Y}, 
+                            {X:res[1].X,  Y:res[1].Y}, 
+                            {X:rect[2].X,  Y:rect[2].Y},
+                            {X:rect[3].X,  Y:rect[3].Y}];
+                            
+            intersect[1] = [{X:res[0].X,  Y:res[0].Y}, 
+                            {X:rect[1].X,  Y:rect[1].Y}, 
+                            {X:res[1].X,  Y:res[1].Y}];
+        }
+        
+        if (record[0] === 1 && record[1] === 2) {
+            intersect[0] = [{X:rect[0].X,  Y:rect[0].Y}, 
+                            {X:rect[1].X,  Y:rect[1].Y}, 
+                            {X:res[0].X,  Y:res[0].Y}, 
+                            {X:res[1].X,  Y:res[1].Y},
+                            {X:rect[3].X,  Y:rect[3].Y}];
+                            
+            intersect[1] = [{X:res[0].X,  Y:res[0].Y}, 
+                            {X:rect[2].X,  Y:rect[2].Y}, 
+                            {X:res[1].X,  Y:res[1].Y}];
+        }
+        
+        if (record[0] === 2 && record[1] === 3) {
+            intersect[0] = [{X:rect[0].X,  Y:rect[0].Y}, 
+                            {X:rect[1].X,  Y:rect[1].Y}, 
+                            {X:rect[2].X,  Y:rect[2].Y}, 
+                            {X:res[0].X,  Y:res[0].Y},
+                            {X:res[1].X,  Y:res[1].Y}];
+                            
+            intersect[1] = [{X:res[0].X,  Y:res[0].Y}, 
+                            {X:rect[3].X,  Y:rect[3].Y}, 
+                            {X:res[1].X,  Y:res[1].Y}];
+        }
+        
+        if (record[0] === 0 && record[1] === 3) {
+            intersect[0] = [{X:res[0].X,  Y:res[0].Y}, 
+                            {X:rect[1].X,  Y:rect[1].Y}, 
+                            {X:rect[2].X,  Y:rect[2].Y}, 
+                            {X:rect[3].X,  Y:rect[3].Y},
+                            {X:res[1].X,  Y:rect[1].Y}];
+                            
+            intersect[1] = [{X:rect[0].X,  Y:rect[0].Y}, 
+                            {X:res[0].X,  Y:res[0].Y}, 
+                            {X:res[1].X,  Y:res[1].Y}];
+        }
+    } else if(record[1] - record[0] === 2){
+        intersect = [];
+        if (record[0] === 0 && record[1] === 2) {
+            intersect[0] = [{X:rect[0].X,  Y:rect[0].Y}, 
+                            {X:res[0].X,  Y:res[0].Y}, 
+                            {X:res[1].X,  Y:res[1].Y}, 
+                            {X:rect[3].X,  Y:rect[3].Y}];
+                            
+            intersect[1] = [{X:res[0].X,  Y:res[0].Y}, 
+                            {X:rect[1].X,  Y:rect[1].Y}, 
+                            {X:rect[2].X,  Y:rect[2].Y}, 
+                            {X:res[1].X,  Y:res[1].Y}];
+        }
+        
+        if (record[0] === 1 && record[1] === 3) {
+            intersect[0] = [{X:rect[0].X,  Y:rect[0].Y}, 
+                            {X:rect[1].X,  Y:rect[1].Y}, 
+                            {X:res[0].X,  Y:res[0].Y}, 
+                            {X:res[1].X,  Y:res[1].Y}];
+                            
+            intersect[1] = [{X:res[1].X,  Y:res[1].Y}, 
+                            {X:res[0].X,  Y:res[0].Y}, 
+                            {X:rect[2].X,  Y:rect[2].Y}, 
+                            {X:rect[3].X,  Y:rect[3].Y}];
+        }
+    }
+    return intersect;
+};
+
+*/
+
