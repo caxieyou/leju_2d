@@ -115,11 +115,11 @@ MyMath.equalPoints = function(point0, point1){
     }
 };
 
-MyMath.lineSegmentsIntersect = function(seg0, seg1){  
-    var a = seg0.point0;
-    var b = seg0.point1;
-    var c = seg1.point0;
-    var d = seg1.point1;
+MyMath.intersectSegments = function(seg0_point0, seg0_point1, seg1_point0, seg1_point1){  
+    var a = seg0_point0;
+    var b = seg0_point1;
+    var c = seg1_point0;
+    var d = seg1_point1;
     
     //twice of the triangle area  
     var area_abc = (a.X - c.X) * (b.Y - c.Y) - (a.Y - c.Y) * (b.X - c.X);  
@@ -142,7 +142,8 @@ MyMath.lineSegmentsIntersect = function(seg0, seg1){
     var t = area_cda / ( area_abd - area_abc );  
     var dx= t*(b.X - a.X),  
         dy= t*(b.Y - a.Y);  
-    return { X: Math.round(a.X + dx) , Y: Math.round(a.Y + dy) };
+    
+    return {point: new ClipperLib.IntPoint(Math.round(a.X + dx), Math.round(a.Y + dy)) , ratio: t};
 };
 
 MyMath.reset = function() {

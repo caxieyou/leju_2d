@@ -44,7 +44,7 @@ function ClipperWrap() {
     this._solution_diff_reverse = new ClipperLib.Paths();
 };
 
-ClipperWrap.prototype.split = function (polys) {
+ClipperWrap.prototype.splitPoly = function (polys) {
     var isInterrupt = false;
 
     for (var key0 in polys) {
@@ -185,3 +185,113 @@ ClipperWrap.prototype._fetchPath = function(path) {
     }
     return res
 };
+
+ClipperWrap.prototype.splitSegmentsPolys = function(segments, polys){
+    //var res = {};
+    for (var id_s in segments) {
+        var segment = segments[id_s];
+        var intersect = [];
+        for (var id_p in polys) {
+            var poly = polys[id_p];
+            intersect[poly.id] = this._splitSegmentPoly(segment, poly);
+        }
+        
+        if (UTILITY._isNotEmpty(intersect)) {
+            var info = null;
+            var interArray = null;
+            var minRatio = 1.0;
+            for(var poly in intersect) {
+                var result = intersect[poly];
+                if (result.length === 2 && result[0].ratio < minRatio) {
+                    minRatio = result[0].ratio;
+                    interArray = result;
+                    info = poly;
+                }
+            }
+            if (info) {
+                var path = [];
+                for(var i = 0; i < interArray[0].index+1; i++) {
+                    path.push(new ClipperLib.IntPoint(polys[info].path[i]));
+                }
+                path.push(new ClipperLib.IntPoint(interArray[0].point));
+                path.push(new ClipperLib.IntPoint(interArray[1].point));
+                
+                for(var i = interArray[1].index+1; i < polys[info].path.length; i++) {
+                    path.push(new ClipperLib.IntPoint(polys[info].path[i]));
+                }
+                var clipperObj0 = new ClipperObject(path, "polygon");
+                clipperObj0.addSource(polys[info].source);
+                polys[clipperObj0.id] = clipperObj0;
+                ////////////////////////////////////////////////////////
+                
+                path = [];
+                path.push(new ClipperLib.IntPoint(interArray[0].point));
+                for(var i = interArray[0].index+1; i < interArray[1].index+1; i++) {
+                    path.push(new ClipperLib.IntPoint(polys[info].path[i]));
+                }
+                path.push(new ClipperLib.IntPoint(interArray[1].point));
+                
+                var clipperObj1 = new ClipperObject(path, "polygon");
+                clipperObj1.addSource(polys[info].source);
+                polys[clipperObj1.id] = clipperObj1;
+                ////////////////////////////////////////////////////////
+                
+                delete polys[info];
+                
+                console.log(info);
+                console.log(interArray);
+                
+            }
+        }
+        //res[segment.id] = tmp;
+    }
+    
+};
+
+ClipperWrap.prototype._splitSegmentPoly = function(segment, poly){
+    var seg0_point0 = segment.path[0];
+    var seg0_point1 = segment.path[1];
+    
+    var res = [];
+    if(poly.path[0] instanceof Array) {
+        /*
+        for(var i = 0; i < poly.length; i++) {
+            for(var j = 0; j < poly[i].path.length + 1; j++){
+                var interset = MyMath.intersectSegments(seg0_point0, seg0_point1, poly[i].path[j], poly[i].path[(j+1)% (poly[i].path.length - 1)]);
+                if(interset) {
+                    res.push(interset);
+                }
+            }
+        }
+        */
+    } else {
+        var path = poly.path;
+        
+        for(var i = 0; i < path.length; i++) {
+            var cur = i;
+            var next = (i + 1) % path.length;
+            
+            var interset = MyMath.intersectSegments(seg0_point0, seg0_point1, path[cur], path[next]);
+            if(interset) {
+                    interset.index = i;
+                    res.push(interset);
+            }
+        }
+    }
+    
+    res.sort(function(a, b) {
+                return a.ratio > b.ratio;
+             });
+             
+    if (res.length > 2) {
+        res.slice(0, 2);
+    }
+    
+    res.sort(function(a, b) {
+                return a.index > b.index;
+             });
+             
+    return res;
+};
+
+

@@ -6,7 +6,7 @@ var TYPE = {
 };
 
 //All the elements created on the GUI
-var ElementsPool = [];
+var PolyPool = [];
 var LinePool = [];
 var GUI = {};
 
@@ -178,7 +178,7 @@ UTILITY._copyElement = function(path) {
     }
 };
 
-UTILITY._mapping = function(myList, clipperList) {
+UTILITY._polyMapping = function(myList, clipperList) {
     var result = [];
     var nameList = [];
     for(var poly in clipperList) {
@@ -204,6 +204,9 @@ UTILITY._mapping = function(myList, clipperList) {
             for (var j = 0; j < nameList[i].length; j++) {
                 var oriPoly = myList[nameList[i][j]];
                 
+                if (!oriPoly.root) {
+                    debugger;
+                }
                 var edge2 = oriPoly.root;
                 
                 while(edge2) {
@@ -237,9 +240,15 @@ UTILITY._mapping = function(myList, clipperList) {
 };
 
 UTILITY.split = function(objs) {
+    //polygon parts from the rect of GUI
     var clipperPolySplit = [];
+    
+    //line segments from the path of GUI,
     var clipperLineSplit = [];
-    ElementsPool = [];
+    
+    PolyPool = [];
+    
+    LinePool = [];
     
     MyMath.reset();
     ClipperObject.reset();
@@ -248,15 +257,19 @@ UTILITY.split = function(objs) {
         if (objs[i].type === "path") {
             var path = UTILITY._getPath(objs[i]);
             var segment = new MySegment(null, null, path);
+            //For now, we just made segments, no line path
             LinePool[segment.id] = segment;
+            
             var clipperObj = new ClipperObject(path, objs[i].type, segment.id);
             clipperLineSplit[clipperObj.id] = clipperObj;
         } 
         else if (objs[i].type === "rect"){
             var path = UTILITY._getPath(objs[i]);
             var rect = new MyPolygon(path);
+            
+            PolyPool[rect.id] = rect;
+            
             var clipperObj = new ClipperObject(path, objs[i].type, rect.id);
-            ElementsPool[rect.id] = rect;
             clipperPolySplit[clipperObj.id] = clipperObj;
         }
     }
@@ -266,16 +279,41 @@ UTILITY.split = function(objs) {
     var isCompleted = false;
 
     while(true && UTILITY._isNotSingle(clipperPolySplit)) {
-        isCompleted = clipperWrap.split(clipperPolySplit);
+        isCompleted = clipperWrap.splitPoly(clipperPolySplit);
         
         if(isCompleted) {
             break;
         }
     }
-
-    console.log(clipperPolySplit);
-    console.log(ElementsPool);
     
-    var res = UTILITY._mapping(ElementsPool, clipperPolySplit);
+    clipperWrap.splitSegmentsPolys(clipperLineSplit, clipperPolySplit);
+    
+    
+    
+    console.log("Before: ");
+    console.log(PolyPool);
+    console.log(LinePool);
+    console.log(clipperLineSplit);
+    
+    console.log("After: ");
+    console.log(clipperPolySplit);
+    
+    
+    
+    
+    
+    var res = UTILITY._polyMapping(PolyPool, clipperPolySplit);
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     console.log(res);
 };
